@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AI Bot</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d0d0d;--surface:#141414;--surface2:#1c1c1c;
+  --border:#2a2a2a;--accent:#00e5a0;--accent2:#00b8ff;
+  --accent3:#7c3aed;--text:#f0f0f0;--text-dim:#666;
+  --user-bg:#0a2a1a;--bot-bg:#111;
+  --glow:rgba(0,229,160,0.2);
+}
+
+body{font-family:'Manrope',sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 10% 50%,rgba(0,229,160,.06) 0%,transparent 60%),radial-gradient(ellipse at 90% 20%,rgba(0,184,255,.06) 0%,transparent 60%);pointer-events:none;}
+
+/* Animated gradient border keyframes */
+@keyframes borderSpin{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes bounce{0%,80%,100%{transform:translateY(0);opacity:.3}40%{transform:translateY(-8px);opacity:1}}
+@keyframes copyFlash{0%{opacity:1}50%{opacity:.5}100%{opacity:1}}
+
+/* Gradient border mixin via pseudo element */
+.grad-border{position:relative;border-radius:20px;}
+.grad-border::before{
+  content:'';position:absolute;inset:-1.5px;border-radius:inherit;
+  background:linear-gradient(135deg,var(--accent),var(--accent2),var(--accent3),var(--accent));
+  background-size:300% 300%;
+  animation:borderSpin 4s ease infinite;
+  z-index:0;
+}
+.grad-border>*{position:relative;z-index:1;}
+.grad-border-inner{background:var(--surface);border-radius:19px;width:100%;height:100%;}
+
+.shell{position:relative;z-index:1;width:95%;max-width:1400px;height:100vh;display:flex;flex-direction:column;padding:20px;gap:12px;}
+
+/* Header with gradient border */
+.header-wrap{position:relative;border-radius:18px;flex-shrink:0;}
+.header-wrap::before{content:'';position:absolute;inset:-1.5px;border-radius:inherit;background:linear-gradient(90deg,var(--accent),var(--accent2),var(--accent3),var(--accent));background-size:300% 300%;animation:borderSpin 4s ease infinite;z-index:0;}
+.header{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;background:var(--surface);border-radius:17px;padding:14px 20px;}
+.brand{display:flex;align-items:center;gap:14px;}
+.logo{width:44px;height:44px;border-radius:13px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 0 24px var(--glow);}
+.brand-info h1{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.brand-info p{font-size:11px;color:var(--text-dim);margin-top:2px;}
+.header-right{display:flex;align-items:center;gap:12px;}
+.badge{display:flex;align-items:center;gap:6px;background:#0a1a0a;border:1px solid #1a3a1a;border-radius:20px;padding:6px 14px;font-size:11px;color:var(--accent);font-family:'Space Mono',monospace;font-weight:700;}
+.badge-dot{width:6px;height:6px;background:var(--accent);border-radius:50%;animation:pulse 2s infinite;box-shadow:0 0 6px var(--accent);}
+.clear-btn{background:transparent;border:1px solid var(--border);color:var(--text-dim);font-family:'Space Mono',monospace;font-size:10px;padding:7px 14px;border-radius:8px;cursor:pointer;transition:all .2s;letter-spacing:.06em;}
+.clear-btn:hover{border-color:var(--accent);color:var(--accent);background:#0a1a0a;}
+
+/* Chat window with gradient border */
+.chat-wrap{position:relative;border-radius:22px;flex:1;min-height:0;}
+.chat-wrap::before{content:'';position:absolute;inset:-1.5px;border-radius:inherit;background:linear-gradient(135deg,var(--accent),var(--accent2),var(--accent3),var(--accent));background-size:300% 300%;animation:borderSpin 4s ease infinite;z-index:0;}
+.chat-window{position:relative;z-index:1;height:100%;background:var(--surface);border-radius:21px;overflow-y:auto;padding:28px;display:flex;flex-direction:column;gap:18px;scroll-behavior:smooth;}
+.chat-window::-webkit-scrollbar{width:3px}
+.chat-window::-webkit-scrollbar-thumb{background:#2a2a2a;border-radius:3px}
+
+/* Welcome */
+.welcome{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center;padding:40px;}
+.welcome-logo{width:90px;height:90px;border-radius:26px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:42px;box-shadow:0 0 50px var(--glow);animation:float 3s ease-in-out infinite;}
+.welcome h2{font-family:'Space Mono',monospace;font-size:26px;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.welcome p{font-size:14px;color:var(--text-dim);line-height:1.8;max-width:400px;}
+.example-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:12px;max-width:700px;width:100%;}
+.example-card{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px;font-size:13px;color:var(--text-dim);cursor:pointer;transition:all .2s;text-align:left;}
+.example-card:hover{border-color:var(--accent);color:var(--text);background:#0a1a0a;transform:translateY(-2px);box-shadow:0 4px 20px var(--glow);}
+.example-card span{display:block;font-size:20px;margin-bottom:6px;}
+
+/* Messages */
+.message{display:flex;gap:12px;animation:fadeUp .3s ease;position:relative;}
+.message.user{flex-direction:row-reverse;}
+.avatar{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;margin-top:2px;}
+.message.user .avatar{background:linear-gradient(135deg,#0a3a1a,#0a2a2a);}
+.message.bot .avatar{background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 0 10px var(--glow);}
+
+.bubble-wrap{display:flex;flex-direction:column;max-width:85%;gap:4px;}
+.message.user .bubble-wrap{align-items:flex-end;}
+.message.bot .bubble-wrap{align-items:flex-start;}
+
+.bubble{padding:13px 17px;border-radius:16px;font-size:14px;line-height:1.75;white-space:pre-wrap;word-break:break-word;}
+.message.user .bubble{background:var(--user-bg);border:1px solid #1a3a1a;border-top-right-radius:3px;color:#a0f0c0;}
+.message.bot .bubble{background:var(--bot-bg);border:1px solid #222;border-top-left-radius:3px;color:var(--text);}
+
+/* Copy button */
+.copy-btn{display:flex;align-items:center;gap:5px;background:transparent;border:1px solid var(--border);color:var(--text-dim);font-family:'Space Mono',monospace;font-size:10px;padding:3px 10px;border-radius:6px;cursor:pointer;transition:all .2s;letter-spacing:.04em;width:fit-content;}
+.copy-btn:hover{border-color:var(--accent);color:var(--accent);}
+.copy-btn.copied{border-color:var(--accent);color:var(--accent);animation:copyFlash .3s ease;}
+.copy-btn svg{width:11px;height:11px;fill:currentColor;}
+
+/* Typing indicator */
+.typing .bubble{display:flex;align-items:center;gap:6px;padding:16px 20px;}
+.dot{width:8px;height:8px;background:var(--accent);border-radius:50%;animation:bounce 1.2s infinite;}
+.dot:nth-child(2){animation-delay:.2s}.dot:nth-child(3){animation-delay:.4s}
+
+/* Input with gradient border */
+.input-outer{position:relative;border-radius:18px;flex-shrink:0;}
+.input-outer::before{content:'';position:absolute;inset:-1.5px;border-radius:inherit;background:linear-gradient(90deg,var(--accent),var(--accent2),var(--accent3),var(--accent));background-size:300% 300%;animation:borderSpin 4s ease infinite;z-index:0;}
+.input-wrap{position:relative;z-index:1;background:var(--surface);border-radius:17px;padding:12px 12px 12px 18px;display:flex;align-items:flex-end;gap:10px;}
+#user-input{flex:1;background:transparent;border:none;outline:none;font-family:'Manrope',sans-serif;font-size:14px;color:var(--text);resize:none;max-height:120px;min-height:24px;line-height:1.6;}
+#user-input::placeholder{color:var(--text-dim)}
+.send-btn{width:42px;height:42px;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0;box-shadow:0 0 20px var(--glow);}
+.send-btn:hover{transform:scale(1.07);}
+.send-btn:active{transform:scale(0.94);}
+.send-btn:disabled{opacity:.3;cursor:not-allowed;transform:none;box-shadow:none;}
+.send-btn svg{fill:#000;}
+
+.footer{text-align:center;font-size:10px;color:#333;font-family:'Space Mono',monospace;letter-spacing:.05em;padding-bottom:2px;flex-shrink:0;}
+
+/* ── MOBILE RESPONSIVE ── */
+@media(max-width:600px){
+  .shell{padding:10px;gap:8px;}
+  .header{padding:10px 14px;}
+  .brand-info h1{font-size:14px;}
+  .brand-info p{display:none;}
+  .logo{width:36px;height:36px;font-size:17px;}
+  .badge{padding:4px 10px;font-size:10px;}
+  .clear-btn{padding:5px 10px;}
+  .chat-window{padding:14px;}
+  .example-grid{grid-template-columns:repeat(2,1fr);gap:8px;max-width:100%;}
+  .welcome h2{font-size:18px;}
+  .welcome p{font-size:12px;}
+  .welcome-logo{width:64px;height:64px;font-size:28px;}
+  .bubble{font-size:13px;padding:10px 13px;}
+  .bubble-wrap{max-width:90%;}
+  .input-wrap{padding:10px 10px 10px 14px;}
+  #user-input{font-size:13px;}
+  .send-btn{width:36px;height:36px;}
+  .footer{font-size:9px;}
+}
+@media(max-width:400px){
+  .example-grid{grid-template-columns:1fr 1fr;}
+  .header-right{gap:6px;}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- Header -->
+  <div class="header-wrap">
+    <div class="header">
+      <div class="brand">
+        <div class="logo">🤖</div>
+        <div class="brand-info">
+          <h1>AI BOT</h1>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="badge"><div class="badge-dot"></div>LOCAL AI</div>
+        <button class="clear-btn" onclick="clearChat()">CLEAR</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chat window -->
+  <div class="chat-wrap">
+    <div class="chat-window" id="chat-window">
+      <div class="welcome" id="welcome">
+        <div class="welcome-logo">🤖</div>
+        <h2>Hey, I'm AI Bot!</h2>
+        <p>Ask me anything — coding, science, math, writing, general knowledge.</p>
+        <div class="example-grid">
+          <div class="example-card" onclick="ask('Write a Python function to reverse a string')"><span>🐍</span>Write Python code</div>
+          <div class="example-card" onclick="ask('Explain black holes in simple words')"><span>🌌</span>Explain black holes</div>
+          <div class="example-card" onclick="ask('Give me 5 tips to learn faster')"><span>💡</span>Learning tips</div>
+          <div class="example-card" onclick="ask('Tell me a fun fact about space')"><span>🚀</span>Fun space fact</div>
+          <div class="example-card" onclick="ask('How does the internet work?')"><span>🌐</span>How internet works</div>
+          <div class="example-card" onclick="ask('Write a short poem about AI')"><span>✍️</span>Write a poem</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Input -->
+  <div class="input-outer">
+    <div class="input-wrap">
+      <textarea id="user-input" rows="1" placeholder="Ask me anything…" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+      <button class="send-btn" id="send-btn" onclick="sendMessage()">
+        <svg width="16" height="16" viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="footer">ENTER to send &nbsp;·&nbsp; SHIFT+ENTER for new line &nbsp;·&nbsp;</div>
+</div>
+
+<script>
+  function autoResize(el){
+    el.style.height='auto';
+    el.style.height=Math.min(el.scrollHeight,120)+'px';
+  }
+
+  function handleKey(e){
+    if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();}
+  }
+
+  function ask(text){
+    document.getElementById('user-input').value=text;
+    sendMessage();
+  }
+
+  function removeWelcome(){
+    const w=document.getElementById('welcome');
+    if(w)w.remove();
+  }
+
+  function copyText(btn, text){
+    navigator.clipboard.writeText(text).then(()=>{
+      btn.classList.add('copied');
+      btn.innerHTML=`<svg viewBox="0 0 24 24"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg> COPIED`;
+      setTimeout(()=>{
+        btn.classList.remove('copied');
+        btn.innerHTML=`<svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg> COPY`;
+      },2000);
+    });
+  }
+
+  function appendMessage(role, text){
+    removeWelcome();
+    const win=document.getElementById('chat-window');
+    const div=document.createElement('div');
+    div.className=`message ${role}`;
+
+    const bubbleWrap=document.createElement('div');
+    bubbleWrap.className='bubble-wrap';
+
+    const bubble=document.createElement('div');
+    bubble.className='bubble';
+    bubble.textContent=text;
+    bubbleWrap.appendChild(bubble);
+
+    // Add copy button for bot messages
+    if(role==='bot'){
+      const copyBtn=document.createElement('button');
+      copyBtn.className='copy-btn';
+      copyBtn.innerHTML=`<svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg> COPY`;
+      copyBtn.onclick=()=>copyText(copyBtn, text);
+      bubbleWrap.appendChild(copyBtn);
+    }
+
+    div.innerHTML=`<div class="avatar">${role==='user'?'👤':'🤖'}</div>`;
+    div.appendChild(bubbleWrap);
+    win.appendChild(div);
+    win.scrollTop=win.scrollHeight;
+  }
+
+  function showTyping(){
+    removeWelcome();
+    const win=document.getElementById('chat-window');
+    const div=document.createElement('div');
+    div.className='message bot typing';
+    div.id='typing';
+    div.innerHTML='<div class="avatar">🤖</div><div class="bubble"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
+    win.appendChild(div);
+    win.scrollTop=win.scrollHeight;
+  }
+
+  function removeTyping(){
+    const el=document.getElementById('typing');
+    if(el)el.remove();
+  }
+
+  async function sendMessage(){
+    const input=document.getElementById('user-input');
+    const btn=document.getElementById('send-btn');
+    const msg=input.value.trim();
+    if(!msg)return;
+    input.value='';
+    input.style.height='auto';
+    btn.disabled=true;
+    appendMessage('user',msg);
+    showTyping();
+    try{
+      const res=await fetch('/chat',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({message:msg})
+      });
+      const data=await res.json();
+      removeTyping();
+      appendMessage('bot',data.reply||'Something went wrong.');
+    }catch{
+      removeTyping();
+      appendMessage('bot','Connection error. Is the Flask server running?');
+    }
+    btn.disabled=false;
+    input.focus();
+  }
+
+  async function clearChat(){
+    await fetch('/clear',{method:'POST'});
+    document.getElementById('chat-window').innerHTML=`
+      <div class="welcome" id="welcome">
+        <div class="welcome-logo">🤖</div>
+        <h2>Hey, I'm AI Bot!</h2>
+        <p>Ask me anything — coding, science, math, writing, general knowledge. I run 100% on your PC!</p>
+        <div class="example-grid">
+          <div class="example-card" onclick="ask('Write a Python function to reverse a string')"><span>🐍</span>Write Python code</div>
+          <div class="example-card" onclick="ask('Explain black holes in simple words')"><span>🌌</span>Explain black holes</div>
+          <div class="example-card" onclick="ask('Give me 5 tips to learn faster')"><span>💡</span>Learning tips</div>
+          <div class="example-card" onclick="ask('Tell me a fun fact about space')"><span>🚀</span>Fun space fact</div>
+          <div class="example-card" onclick="ask('How does the internet work?')"><span>🌐</span>How internet works</div>
+          <div class="example-card" onclick="ask('Write a short poem about AI')"><span>✍️</span>Write a poem</div>
+        </div>
+      </div>`;
+  }
+</script>
+</body>
+</html>
