@@ -9,14 +9,13 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
   --bg:#0d0d0d;--surface:#141414;--surface2:#1c1c1c;
-  --border:#2a2a2a;--accent:#00e5a0;--accent2:#00b8ff;
-  --accent3:#7c3aed;--text:#f0f0f0;--text-dim:#666;
-  --user-bg:#0a2a1a;--bot-bg:#111;
-  --glow:rgba(0,229,160,0.2);
+  --border:#2a2a2a;--accent:#00e5a0;--accent2:#00b8ff;--accent3:#a855f7;
+  --text:#f0f0f0;--text-dim:#666;--user-bg:#0a2a1a;--bot-bg:#111;
+  --glow:rgba(0,229,160,0.15);--glow2:rgba(0,184,255,0.15);
 }
 
-body{font-family:'Manrope',sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden;}
-body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 10% 50%,rgba(0,229,160,.06) 0%,transparent 60%),radial-gradient(ellipse at 90% 20%,rgba(0,184,255,.06) 0%,transparent 60%);pointer-events:none;}
+body{font-family:'Manrope',sans-serif;background:var(--bg);color:var(--text);height:100vh;height:100dvh;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 10% 50%,rgba(0,229,160,.05) 0%,transparent 60%),radial-gradient(ellipse at 90% 20%,rgba(0,184,255,.05) 0%,transparent 60%);pointer-events:none;}
 
 /* Animated gradient border keyframes */
 @keyframes borderSpin{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
@@ -24,29 +23,28 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
 @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 @keyframes bounce{0%,80%,100%{transform:translateY(0);opacity:.3}40%{transform:translateY(-8px);opacity:1}}
-@keyframes copyFlash{0%{opacity:1}50%{opacity:.5}100%{opacity:1}}
+@keyframes gradShift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
 
-/* Gradient border mixin via pseudo element */
-.grad-border{position:relative;border-radius:20px;}
+.shell{position:relative;z-index:1;width:95%;max-width:1100px;height:100vh;height:100dvh;display:flex;flex-direction:column;padding:20px;gap:12px;}
+
+/* ── Gradient border mixin via wrapper trick ── */
+.grad-border{position:relative;border-radius:18px;}
 .grad-border::before{
   content:'';position:absolute;inset:-1.5px;border-radius:inherit;
-  background:linear-gradient(135deg,var(--accent),var(--accent2),var(--accent3),var(--accent));
+  background:linear-gradient(270deg,var(--accent),var(--accent2),var(--accent3),var(--accent));
   background-size:300% 300%;
   animation:borderSpin 4s ease infinite;
   z-index:0;
 }
-.grad-border>*{position:relative;z-index:1;}
-.grad-border-inner{background:var(--surface);border-radius:19px;width:100%;height:100%;}
+.grad-border > *{position:relative;z-index:1;}
 
-.shell{position:relative;z-index:1;width:95%;max-width:1400px;height:100vh;display:flex;flex-direction:column;padding:20px;gap:12px;}
-
-/* Header with gradient border */
-.header-wrap{position:relative;border-radius:18px;flex-shrink:0;}
-.header-wrap::before{content:'';position:absolute;inset:-1.5px;border-radius:inherit;background:linear-gradient(90deg,var(--accent),var(--accent2),var(--accent3),var(--accent));background-size:300% 300%;animation:borderSpin 4s ease infinite;z-index:0;}
-.header{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;background:var(--surface);border-radius:17px;padding:14px 20px;}
+/* Header */
+.header-wrap{position:relative;border-radius:16px;}
+.header-wrap::before{content:'';position:absolute;inset:-1.5px;border-radius:inherit;background:linear-gradient(270deg,var(--accent),var(--accent2),var(--accent3),var(--accent));background-size:300% 300%;animation:borderSpin 4s ease infinite;z-index:0;}
+.header{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;background:var(--surface);border-radius:15px;padding:14px 20px;}
 .brand{display:flex;align-items:center;gap:14px;}
 .logo{width:44px;height:44px;border-radius:13px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 0 24px var(--glow);}
-.brand-info h1{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.brand-info h1{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;background:linear-gradient(90deg,var(--accent),var(--accent2),var(--accent3));background-size:200%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:gradShift 3s ease infinite;}
 .brand-info p{font-size:11px;color:var(--text-dim);margin-top:2px;}
 .header-right{display:flex;align-items:center;gap:12px;}
 .badge{display:flex;align-items:center;gap:6px;background:#0a1a0a;border:1px solid #1a3a1a;border-radius:20px;padding:6px 14px;font-size:11px;color:var(--accent);font-family:'Space Mono',monospace;font-weight:700;}
@@ -54,19 +52,19 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .clear-btn{background:transparent;border:1px solid var(--border);color:var(--text-dim);font-family:'Space Mono',monospace;font-size:10px;padding:7px 14px;border-radius:8px;cursor:pointer;transition:all .2s;letter-spacing:.06em;}
 .clear-btn:hover{border-color:var(--accent);color:var(--accent);background:#0a1a0a;}
 
-/* Chat window with gradient border */
-.chat-wrap{position:relative;border-radius:22px;flex:1;min-height:0;}
-.chat-wrap::before{content:'';position:absolute;inset:-1.5px;border-radius:inherit;background:linear-gradient(135deg,var(--accent),var(--accent2),var(--accent3),var(--accent));background-size:300% 300%;animation:borderSpin 4s ease infinite;z-index:0;}
+/* Chat window with animated border */
+.chat-wrap{flex:1;position:relative;border-radius:22px;min-height:0;}
+.chat-wrap::before{content:'';position:absolute;inset:-1.5px;border-radius:inherit;background:linear-gradient(270deg,var(--accent),var(--accent2),var(--accent3),var(--accent));background-size:300% 300%;animation:borderSpin 4s ease infinite;z-index:0;}
 .chat-window{position:relative;z-index:1;height:100%;background:var(--surface);border-radius:21px;overflow-y:auto;padding:28px;display:flex;flex-direction:column;gap:18px;scroll-behavior:smooth;}
 .chat-window::-webkit-scrollbar{width:3px}
 .chat-window::-webkit-scrollbar-thumb{background:#2a2a2a;border-radius:3px}
 
 /* Welcome */
 .welcome{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center;padding:40px;}
-.welcome-logo{width:90px;height:90px;border-radius:26px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:42px;box-shadow:0 0 50px var(--glow);animation:float 3s ease-in-out infinite;}
-.welcome h2{font-family:'Space Mono',monospace;font-size:26px;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.welcome-logo{width:90px;height:90px;border-radius:26px;background:linear-gradient(135deg,var(--accent),var(--accent2),var(--accent3));display:flex;align-items:center;justify-content:center;font-size:42px;box-shadow:0 0 50px var(--glow);animation:float 3s ease-in-out infinite;}
+.welcome h2{font-family:'Space Mono',monospace;font-size:26px;background:linear-gradient(90deg,var(--accent),var(--accent2),var(--accent3));background-size:200%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:gradShift 3s ease infinite;}
 .welcome p{font-size:14px;color:var(--text-dim);line-height:1.8;max-width:400px;}
-.example-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:12px;max-width:700px;width:100%;}
+.example-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:12px;max-width:700px;}
 .example-card{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px;font-size:13px;color:var(--text-dim);cursor:pointer;transition:all .2s;text-align:left;}
 .example-card:hover{border-color:var(--accent);color:var(--text);background:#0a1a0a;transform:translateY(-2px);box-shadow:0 4px 20px var(--glow);}
 .example-card span{display:block;font-size:20px;margin-bottom:6px;}
@@ -78,63 +76,62 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .message.user .avatar{background:linear-gradient(135deg,#0a3a1a,#0a2a2a);}
 .message.bot .avatar{background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 0 10px var(--glow);}
 
-.bubble-wrap{display:flex;flex-direction:column;max-width:85%;gap:4px;}
-.message.user .bubble-wrap{align-items:flex-end;}
-.message.bot .bubble-wrap{align-items:flex-start;}
+.msg-content{display:flex;flex-direction:column;gap:4px;max-width:85%;}
+.message.user .msg-content{align-items:flex-end;}
+.message.bot .msg-content{align-items:flex-start;}
 
 .bubble{padding:13px 17px;border-radius:16px;font-size:14px;line-height:1.75;white-space:pre-wrap;word-break:break-word;}
 .message.user .bubble{background:var(--user-bg);border:1px solid #1a3a1a;border-top-right-radius:3px;color:#a0f0c0;}
 .message.bot .bubble{background:var(--bot-bg);border:1px solid #222;border-top-left-radius:3px;color:var(--text);}
 
 /* Copy button */
-.copy-btn{display:flex;align-items:center;gap:5px;background:transparent;border:1px solid var(--border);color:var(--text-dim);font-family:'Space Mono',monospace;font-size:10px;padding:3px 10px;border-radius:6px;cursor:pointer;transition:all .2s;letter-spacing:.04em;width:fit-content;}
-.copy-btn:hover{border-color:var(--accent);color:var(--accent);}
-.copy-btn.copied{border-color:var(--accent);color:var(--accent);animation:copyFlash .3s ease;}
-.copy-btn svg{width:11px;height:11px;fill:currentColor;}
+.copy-btn{display:inline-flex;align-items:center;gap:5px;background:transparent;border:1px solid var(--border);color:var(--text-dim);font-family:'Space Mono',monospace;font-size:10px;padding:4px 10px;border-radius:6px;cursor:pointer;transition:all .2s;letter-spacing:.04em;opacity:0;}
+.message:hover .copy-btn{opacity:1;}
+.copy-btn:hover{border-color:var(--accent);color:var(--accent);background:#0a1a0a;}
+.copy-btn.copied{border-color:var(--accent);color:var(--accent);}
 
-/* Typing indicator */
+/* Typing */
 .typing .bubble{display:flex;align-items:center;gap:6px;padding:16px 20px;}
 .dot{width:8px;height:8px;background:var(--accent);border-radius:50%;animation:bounce 1.2s infinite;}
 .dot:nth-child(2){animation-delay:.2s}.dot:nth-child(3){animation-delay:.4s}
 
-/* Input with gradient border */
-.input-outer{position:relative;border-radius:18px;flex-shrink:0;}
-.input-outer::before{content:'';position:absolute;inset:-1.5px;border-radius:inherit;background:linear-gradient(90deg,var(--accent),var(--accent2),var(--accent3),var(--accent));background-size:300% 300%;animation:borderSpin 4s ease infinite;z-index:0;}
+/* Input with animated border */
+.input-outer{position:relative;border-radius:18px;}
+.input-outer::before{content:'';position:absolute;inset:-1.5px;border-radius:inherit;background:linear-gradient(270deg,var(--accent),var(--accent2),var(--accent3),var(--accent));background-size:300% 300%;animation:borderSpin 4s ease infinite;z-index:0;}
 .input-wrap{position:relative;z-index:1;background:var(--surface);border-radius:17px;padding:12px 12px 12px 18px;display:flex;align-items:flex-end;gap:10px;}
 #user-input{flex:1;background:transparent;border:none;outline:none;font-family:'Manrope',sans-serif;font-size:14px;color:var(--text);resize:none;max-height:120px;min-height:24px;line-height:1.6;}
 #user-input::placeholder{color:var(--text-dim)}
 .send-btn{width:42px;height:42px;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0;box-shadow:0 0 20px var(--glow);}
-.send-btn:hover{transform:scale(1.07);}
+.send-btn:hover{transform:scale(1.07);box-shadow:0 0 30px var(--glow);}
 .send-btn:active{transform:scale(0.94);}
 .send-btn:disabled{opacity:.3;cursor:not-allowed;transform:none;box-shadow:none;}
 .send-btn svg{fill:#000;}
+.footer{text-align:center;font-size:10px;color:#333;font-family:'Space Mono',monospace;letter-spacing:.05em;padding-bottom:2px;}
 
-.footer{text-align:center;font-size:10px;color:#333;font-family:'Space Mono',monospace;letter-spacing:.05em;padding-bottom:2px;flex-shrink:0;}
-
-/* ── MOBILE RESPONSIVE ── */
+/* ── Mobile responsive ── */
 @media(max-width:600px){
-  .shell{padding:10px;gap:8px;}
+  .shell{padding:10px;gap:6px;}
+  .footer{display:none;}
   .header{padding:10px 14px;}
   .brand-info h1{font-size:14px;}
   .brand-info p{display:none;}
-  .logo{width:36px;height:36px;font-size:17px;}
+  .logo{width:36px;height:36px;font-size:18px;}
   .badge{padding:4px 10px;font-size:10px;}
   .clear-btn{padding:5px 10px;}
-  .chat-window{padding:14px;}
-  .example-grid{grid-template-columns:repeat(2,1fr);gap:8px;max-width:100%;}
-  .welcome h2{font-size:18px;}
-  .welcome p{font-size:12px;}
-  .welcome-logo{width:64px;height:64px;font-size:28px;}
-  .bubble{font-size:13px;padding:10px 13px;}
-  .bubble-wrap{max-width:90%;}
+  .chat-window{padding:16px;}
+  .example-grid{grid-template-columns:1fr 1fr;gap:8px;max-width:100%;}
+  .welcome h2{font-size:20px;}
+  .welcome p{font-size:13px;}
+  .welcome-logo{width:70px;height:70px;font-size:32px;}
+  .bubble{font-size:13px;}
+  .msg-content{max-width:90%;}
+  .copy-btn{opacity:1;}
   .input-wrap{padding:10px 10px 10px 14px;}
   #user-input{font-size:13px;}
-  .send-btn{width:36px;height:36px;}
-  .footer{font-size:9px;}
 }
+
 @media(max-width:400px){
-  .example-grid{grid-template-columns:1fr 1fr;}
-  .header-right{gap:6px;}
+  .example-grid{grid-template-columns:1fr;}
 }
 </style>
 </head>
@@ -148,6 +145,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
         <div class="logo">🤖</div>
         <div class="brand-info">
           <h1>AI BOT</h1>
+          <p>Powered by Llama3 · Running locally on your PC</p>
         </div>
       </div>
       <div class="header-right">
@@ -157,13 +155,13 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     </div>
   </div>
 
-  <!-- Chat window -->
+  <!-- Chat -->
   <div class="chat-wrap">
     <div class="chat-window" id="chat-window">
       <div class="welcome" id="welcome">
         <div class="welcome-logo">🤖</div>
         <h2>Hey, I'm AI Bot!</h2>
-        <p>Ask me anything — coding, science, math, writing, general knowledge.</p>
+        <p>Ask me anything — coding, science, math, writing, general knowledge. I run 100% on your PC!</p>
         <div class="example-grid">
           <div class="example-card" onclick="ask('Write a Python function to reverse a string')"><span>🐍</span>Write Python code</div>
           <div class="example-card" onclick="ask('Explain black holes in simple words')"><span>🌌</span>Explain black holes</div>
@@ -185,8 +183,8 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
       </button>
     </div>
   </div>
+  <div class="footer">ENTER to send &nbsp;·&nbsp; SHIFT+ENTER for new line &nbsp;·&nbsp; 100% LOCAL &nbsp;·&nbsp; NO API KEY</div>
 
-  <div class="footer">ENTER to send &nbsp;·&nbsp; SHIFT+ENTER for new line &nbsp;·&nbsp;</div>
 </div>
 
 <script>
@@ -209,13 +207,13 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     if(w)w.remove();
   }
 
-  function copyText(btn, text){
+  function copyText(text, btn){
     navigator.clipboard.writeText(text).then(()=>{
+      btn.innerHTML='✅ COPIED';
       btn.classList.add('copied');
-      btn.innerHTML=`<svg viewBox="0 0 24 24"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg> COPIED`;
       setTimeout(()=>{
+        btn.innerHTML='📋 COPY';
         btn.classList.remove('copied');
-        btn.innerHTML=`<svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg> COPY`;
       },2000);
     });
   }
@@ -226,25 +224,16 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     const div=document.createElement('div');
     div.className=`message ${role}`;
 
-    const bubbleWrap=document.createElement('div');
-    bubbleWrap.className='bubble-wrap';
+    const copyBtn = role==='bot'
+      ? `<button class="copy-btn" onclick="copyText(this.closest('.message').querySelector('.bubble').innerText, this)">📋 COPY</button>`
+      : '';
 
-    const bubble=document.createElement('div');
-    bubble.className='bubble';
-    bubble.textContent=text;
-    bubbleWrap.appendChild(bubble);
-
-    // Add copy button for bot messages
-    if(role==='bot'){
-      const copyBtn=document.createElement('button');
-      copyBtn.className='copy-btn';
-      copyBtn.innerHTML=`<svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg> COPY`;
-      copyBtn.onclick=()=>copyText(copyBtn, text);
-      bubbleWrap.appendChild(copyBtn);
-    }
-
-    div.innerHTML=`<div class="avatar">${role==='user'?'👤':'🤖'}</div>`;
-    div.appendChild(bubbleWrap);
+    div.innerHTML=`
+      <div class="avatar">${role==='user'?'👤':'🤖'}</div>
+      <div class="msg-content">
+        <div class="bubble">${escapeHtml(text)}</div>
+        ${copyBtn}
+      </div>`;
     win.appendChild(div);
     win.scrollTop=win.scrollHeight;
   }
@@ -263,6 +252,27 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   function removeTyping(){
     const el=document.getElementById('typing');
     if(el)el.remove();
+  }
+
+  function escapeHtml(t){
+    return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function getWelcomeHTML(){
+    return `
+      <div class="welcome" id="welcome">
+        <div class="welcome-logo">🤖</div>
+        <h2>Hey, I'm AI Bot!</h2>
+        <p>Ask me anything — coding, science, math, writing, general knowledge. I run 100% on your PC!</p>
+        <div class="example-grid">
+          <div class="example-card" onclick="ask('Write a Python function to reverse a string')"><span>🐍</span>Write Python code</div>
+          <div class="example-card" onclick="ask('Explain black holes in simple words')"><span>🌌</span>Explain black holes</div>
+          <div class="example-card" onclick="ask('Give me 5 tips to learn faster')"><span>💡</span>Learning tips</div>
+          <div class="example-card" onclick="ask('Tell me a fun fact about space')"><span>🚀</span>Fun space fact</div>
+          <div class="example-card" onclick="ask('How does the internet work?')"><span>🌐</span>How internet works</div>
+          <div class="example-card" onclick="ask('Write a short poem about AI')"><span>✍️</span>Write a poem</div>
+        </div>
+      </div>`;
   }
 
   async function sendMessage(){
@@ -294,20 +304,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 
   async function clearChat(){
     await fetch('/clear',{method:'POST'});
-    document.getElementById('chat-window').innerHTML=`
-      <div class="welcome" id="welcome">
-        <div class="welcome-logo">🤖</div>
-        <h2>Hey, I'm AI Bot!</h2>
-        <p>Ask me anything — coding, science, math, writing, general knowledge. I run 100% on your PC!</p>
-        <div class="example-grid">
-          <div class="example-card" onclick="ask('Write a Python function to reverse a string')"><span>🐍</span>Write Python code</div>
-          <div class="example-card" onclick="ask('Explain black holes in simple words')"><span>🌌</span>Explain black holes</div>
-          <div class="example-card" onclick="ask('Give me 5 tips to learn faster')"><span>💡</span>Learning tips</div>
-          <div class="example-card" onclick="ask('Tell me a fun fact about space')"><span>🚀</span>Fun space fact</div>
-          <div class="example-card" onclick="ask('How does the internet work?')"><span>🌐</span>How internet works</div>
-          <div class="example-card" onclick="ask('Write a short poem about AI')"><span>✍️</span>Write a poem</div>
-        </div>
-      </div>`;
+    document.getElementById('chat-window').innerHTML=getWelcomeHTML();
   }
 </script>
 </body>
