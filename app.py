@@ -21,16 +21,67 @@ http_session.mount('http://', adapter)
 http_session.headers.update({'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'})
 
 # Initialize primary ultra-high-speed inference accelerator (Groq / Nova engine)
-PRIMARY_API_KEY = (os.environ.get("NOVA_API_KEY") or os.environ.get("GROQ_API_KEY") or "").strip()
-engine_client = None
+PRIMARY_API_KEY = (
+    os.environ.get("NOVA_API_KEY") or 
+    os.environ.get("GROQ_API_KEY") or 
+    os.environ.get("GROQ_KEY") or 
+    os.environ.get("AI_API_KEY") or 
+    ""
+).strip()
 
-if PRIMARY_API_KEY:
+_cached_groq_clients = {}
+
+def get_groq_client(custom_key=""):
+    """Instantiate or retrieve cached high-speed inference client."""
+    key = (custom_key or PRIMARY_API_KEY or "").strip()
+    if not key:
+        return None
+    if key in _cached_groq_clients:
+        return _cached_groq_clients[key]
     try:
         from groq import Groq
-        engine_client = Groq(api_key=PRIMARY_API_KEY)
-        print("Nova Ultra-Fast Engine initialized (~800 tokens/sec).")
+        c = Groq(api_key=key)
+        _cached_groq_clients[key] = c
+        return c
     except Exception as e:
-        print(f"Primary accelerator notice: {e}")
+        print(f"Inference client note: {e}")
+        return None
+
+def is_advanced_query(text):
+    """Detect if the query asks for advanced reasoning, code, math, or architectural design."""
+    patterns = [
+        r'\b(code|python|javascript|typescript|c\+\+|java|rust|golang|sql|html|css|bash|regex)\b',
+        r'\b(algorithm|architecture|design pattern|refactor|debug|fix|function|class|method|struct)\b',
+        r'\b(math|calculus|algebra|formula|proof|equation|probability|statistics|matrix|vector)\b',
+        r'\b(explain why|compare|trade-offs|step-by-step|analysis|deep dive|benchmark|system design)\b',
+        r'\b(optimize|database|backend|security|auth|jwt|oauth|microservice|concurrency|async)\b'
+    ]
+    lowered = text.lower()
+    return any(re.search(p, lowered) for p in patterns)
+
+def build_system_prompt(is_advanced=False, search_context=""):
+    """Produce clean, structured, high-tier responses without fluff or preamble."""
+    if is_advanced:
+        prompt = (
+            "You are Nova, an elite high-efficiency AI specializing in advanced technical problem-solving.\n"
+            "Style Guidelines:\n"
+            "1. Zero Preamble: Never begin with filler (e.g. 'Sure!', 'I can help with that', 'Certainly'). Start directly with the answer.\n"
+            "2. Clear Structure: Organize with bold headings, concise bullet points, and markdown tables for comparisons.\n"
+            "3. Production-Grade Code: When writing code, provide clean, idiomatic, fully functional implementations with explicit language tags (e.g. ```python) and brief explanatory comments.\n"
+            "4. Technical Rigor: State time/space complexity ($O(n)$) and architectural trade-offs where relevant."
+        )
+    else:
+        prompt = (
+            "You are Nova, an ultra-fast, intelligent AI assistant.\n"
+            "Style Guidelines:\n"
+            "1. Instant & Direct: Never use filler introductions. Start directly with the answer.\n"
+            "2. Structured & Scannable: Use concise bullet points, bold key terms, and short paragraphs for fast reading.\n"
+            "3. Accuracy & Clarity: Provide factual, helpful, and easily digestible answers."
+        )
+
+    if search_context:
+        prompt += f"\n\nLive Verified Web Information:\n{search_context}"
+    return prompt
 
 # Fast web search helper (tight 2.0s timeout to never delay chat answers)
 def search_web_fast(query, max_results=3):
@@ -82,9 +133,13 @@ def call_fallback_sync(messages):
         res = http_session.post(
             "https://text.pollinations.ai/",
             json=payload,
-            timeout=10
+            timeout=18
         )
         cleaned = clean_sse_data(res.text)
+        lowered = cleaned.lower()
+        # Shield against third-party provider leakages or IP rate limit notices
+        if any(bad in lowered for term in ["free limit", "pollinations", "pollen", "per ip", "unlimited replies"] for bad in [term]):
+            return "Nova AI is experiencing high concurrency. Please retry your message in a brief moment."
         return cleaned if cleaned else "I am ready. How can I assist you?"
     except Exception as e:
         print(f"Fast fallback note: {e}")
@@ -122,12 +177,8 @@ def chat():
         if results:
             search_context = "\n[Verified Web Data]:\n" + "\n".join(f"- {r}" for r in results)
 
-    system_prompt = (
-        "You are Nova, an ultra-fast, intelligent AI assistant. "
-        "Answer clearly, directly, and concisely. Keep answers focused without unnecessary filler."
-    )
-    if search_context:
-        system_prompt += f"\nLive Web Info:{search_context}"
+    is_advanced = is_advanced_query(user_message) or (mode == "precision")
+    system_prompt = build_system_prompt(is_advanced=is_advanced, search_context=search_context)
 
     # Optimized context window: keep recent 6 messages for maximum throughput & speed
     formatted_messages = [{"role": "system", "content": system_prompt}]
@@ -138,19 +189,21 @@ def chat():
             formatted_messages.append({"role": role, "content": content})
     formatted_messages.append({"role": "user", "content": user_message})
 
-    ui_mode = "Turbo Mode" if mode == "turbo" else "Precision Mode"
+    ui_mode = "Precision Mode" if is_advanced else "Turbo Mode"
 
     # 1. Primary ultra-fast accelerator (Groq: 800+ tokens/sec, response in <1 second)
-    if engine_client:
+    client = get_groq_client(data.get("api_key"))
+    if client:
         try:
-            # llama-3.1-8b-instant is the fastest production model in the world
-            internal_model = "llama-3.1-8b-instant" if mode == "turbo" else "llama-3.3-70b-versatile"
-            token_budget = 650 if mode == "turbo" else 1000
-            response = engine_client.chat.completions.create(
+            # llama-3.1-8b-instant for instant answers (~800 tps); llama-3.3-70b-versatile for high-tier reasoning
+            internal_model = "llama-3.3-70b-versatile" if is_advanced else "llama-3.1-8b-instant"
+            token_budget = 1200 if is_advanced else 750
+            temperature = 0.4 if is_advanced else 0.6
+            response = client.chat.completions.create(
                 model=internal_model,
                 messages=formatted_messages,
                 max_tokens=token_budget,
-                temperature=0.6
+                temperature=temperature
             )
             reply = response.choices[0].message.content
             return jsonify({"reply": reply, "mode": ui_mode, "searched": bool(search_context)})
@@ -182,12 +235,8 @@ def chat_stream():
         if results:
             search_context = "\n[Verified Web Data]:\n" + "\n".join(f"- {r}" for r in results)
 
-    system_prompt = (
-        "You are Nova, an ultra-fast, intelligent AI assistant. "
-        "Answer clearly, directly, and concisely. Keep answers focused without unnecessary filler."
-    )
-    if search_context:
-        system_prompt += f"\nLive Web Info:{search_context}"
+    is_advanced = is_advanced_query(user_message) or (mode == "precision")
+    system_prompt = build_system_prompt(is_advanced=is_advanced, search_context=search_context)
 
     formatted_messages = [{"role": "system", "content": system_prompt}]
     for msg in history[-6:]:
@@ -202,15 +251,17 @@ def chat_stream():
             yield f"data: {json.dumps({'meta': 'Browsing live web sources...'})}\n\n"
 
         # Hardware-accelerated streaming (<250ms time-to-first-token)
-        if engine_client:
+        client = get_groq_client(data.get("api_key"))
+        if client:
             try:
-                internal_model = "llama-3.1-8b-instant" if mode == "turbo" else "llama-3.3-70b-versatile"
-                token_budget = 650 if mode == "turbo" else 1000
-                stream = engine_client.chat.completions.create(
+                internal_model = "llama-3.3-70b-versatile" if is_advanced else "llama-3.1-8b-instant"
+                token_budget = 1200 if is_advanced else 750
+                temperature = 0.4 if is_advanced else 0.6
+                stream = client.chat.completions.create(
                     model=internal_model,
                     messages=formatted_messages,
                     max_tokens=token_budget,
-                    temperature=0.6,
+                    temperature=temperature,
                     stream=True
                 )
                 for chunk in stream:

@@ -1182,8 +1182,11 @@ body{
     <span>🌐</span>
   </button>
 
-  <!-- Bottom Dock Actions: Theme Switcher & User Avatar -->
+  <!-- Bottom Dock Actions: Speed Settings, Theme Switcher & User Avatar -->
   <div class="dock-bottom">
+    <button class="dock-btn" onclick="openKeyModal()" title="High-Speed Engine Settings">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </button>
     <button class="dock-btn" id="dock-theme-btn" onclick="toggleTheme()" title="Toggle Light/Dark Theme">
       <span id="theme-glyph">🌙</span>
     </button>
@@ -1211,7 +1214,7 @@ body{
   <div class="history-list-box" id="history-list-box"></div>
 
   <div class="panel-footer">
-    <button class="clear-all-link" onclick="toggleTheme()">Toggle Theme</button>
+    <button class="clear-all-link" onclick="openKeyModal()">⚡ Speed Settings</button>
     <button class="clear-all-link" onclick="requestClearAll()">Clear all</button>
   </div>
 </aside>
@@ -1345,6 +1348,40 @@ body{
       <button type="button" class="modal-btn cancel" onclick="closeModal('clear-modal-overlay')">Cancel</button>
       <button type="button" class="modal-btn danger" onclick="confirmClearAllData()">Clear All</button>
     </div>
+  </div>
+</div>
+
+<!-- 4. HIGH-SPEED ENGINE SETTINGS MODAL -->
+<div class="modal-overlay" id="key-modal-overlay" onclick="handleModalOverlayClick(event, 'key-modal-overlay')">
+  <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="key-modal-title">
+    <div class="modal-header">
+      <div class="modal-title-wrap">
+        <div class="modal-icon-badge accent">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        </div>
+        <h3 class="modal-title" id="key-modal-title">High-Speed Engine Settings</h3>
+      </div>
+      <button class="modal-close-btn" onclick="closeModal('key-modal-overlay')" title="Cancel">✕</button>
+    </div>
+    <form onsubmit="event.preventDefault(); saveCustomKey();" style="display:flex;flex-direction:column;gap:14px;">
+      <div class="modal-body" style="font-size:13px;line-height:1.55;">
+        <p style="margin:0 0 10px 0;">
+          Unlock guaranteed <strong>sub-second answers (<0.5s, 800+ tokens/sec)</strong> and frontier 70B reasoning by connecting a free API key:
+        </p>
+        <ul style="margin:0 0 12px 18px;padding:0;color:var(--text-muted);font-size:12px;">
+          <li>Free tier: <strong>14,400 daily requests</strong> (resets daily at 00:00 UTC)</li>
+          <li>Instant key setup at <a href="https://console.groq.com/keys" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:underline;">console.groq.com/keys</a></li>
+          <li>Saved private & secure inside your browser's local storage</li>
+        </ul>
+        <label for="custom-key-input" style="display:block;margin-bottom:6px;font-size:12px;color:var(--text-dim);font-weight:600;">Dedicated API Key:</label>
+        <input type="password" id="custom-key-input" class="modal-input" placeholder="gsk_..." autocomplete="off" spellcheck="false" />
+        <div id="key-status-hint" style="margin-top:6px;font-size:11.5px;color:var(--text-dim);"></div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="modal-btn cancel" onclick="removeCustomKey()">Remove Key</button>
+        <button type="submit" class="modal-btn primary">Save & Connect</button>
+      </div>
+    </form>
   </div>
 </div>
 
@@ -1493,8 +1530,41 @@ body{
       closeModal('delete-modal-overlay');
       closeModal('rename-modal-overlay');
       closeModal('clear-modal-overlay');
+      closeModal('key-modal-overlay');
     }
   });
+
+  // High-Speed Engine Key Settings Flow
+  function openKeyModal(){
+    const input = document.getElementById('custom-key-input');
+    const savedKey = localStorage.getItem('nova_custom_api_key') || '';
+    input.value = savedKey;
+    const hint = document.getElementById('key-status-hint');
+    if(savedKey){
+      hint.innerHTML = '<span style="color:var(--accent);font-weight:600;">⚡ Dedicated Accelerator Key Active</span>';
+    } else {
+      hint.innerHTML = '<span>Cloud Fallback Active (Standard Speed)</span>';
+    }
+    openModal('key-modal-overlay');
+    setTimeout(() => { input.focus(); }, 50);
+  }
+
+  function saveCustomKey(){
+    const input = document.getElementById('custom-key-input');
+    const key = input.value.trim();
+    if(key){
+      localStorage.setItem('nova_custom_api_key', key);
+      showToast('Dedicated accelerator key connected!', '⚡');
+    }
+    closeModal('key-modal-overlay');
+  }
+
+  function removeCustomKey(){
+    localStorage.removeItem('nova_custom_api_key');
+    document.getElementById('custom-key-input').value = '';
+    showToast('Key removed. Reverted to cloud fallback.', 'ℹ️');
+    closeModal('key-modal-overlay');
+  }
 
   // 1. Delete Confirmation Flow
   function requestDeleteChat(e, id){
@@ -1825,7 +1895,8 @@ body{
           message: message,
           history: history,
           mode: activeMode,
-          web_search: webSearchEnabled
+          web_search: webSearchEnabled,
+          api_key: localStorage.getItem('nova_custom_api_key') || ''
         }),
         signal: abortController.signal
       });
