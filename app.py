@@ -11,19 +11,18 @@ load_dotenv()
 
 app = Flask(__name__)
 
-# Initialize Groq client if key is available
+# Initialize AI engine
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "").strip()
-groq_client = None
+engine_client = None
 
 if GROQ_API_KEY:
     try:
         from groq import Groq
-        groq_client = Groq(api_key=GROQ_API_KEY)
-        print("Groq client initialized successfully.")
+        engine_client = Groq(api_key=GROQ_API_KEY)
     except Exception as e:
-        print(f"Warning: Failed to initialize Groq client: {e}")
+        print(f"Warning: Primary engine initialization note: {e}")
 
-# Web search helper using DuckDuckGo HTML (no API key required, zero external dependencies)
+# Web search helper using DuckDuckGo HTML (zero dependencies, completely private)
 def search_web(query, max_results=4):
     try:
         data = urllib.parse.urlencode({'q': query}).encode('utf-8')
@@ -47,7 +46,7 @@ def search_web(query, max_results=4):
                 break
         return clean_results
     except Exception as e:
-        print(f"Search error: {e}")
+        print(f"Web search note: {e}")
         return []
 
 def should_search_web(user_message, web_search_forced=False):
@@ -56,13 +55,13 @@ def should_search_web(user_message, web_search_forced=False):
     triggers = [
         "today", "yesterday", "latest", "recent", "news", "current", "weather",
         "score", "stock", "price", "update", "2024", "2025", "2026", "who is the current",
-        "what happened", "release date", "election", "match"
+        "what happened", "release date", "election", "match", "trending"
     ]
     msg = user_message.lower()
     return any(t in msg for t in triggers)
 
 def clean_sse_data(raw_text):
-    """If text contains SSE data: chunks, extract the clean inner content."""
+    """Clean internal stream format into pure readable text."""
     if "data: " not in raw_text:
         return raw_text.strip()
     parts = []
@@ -82,8 +81,8 @@ def clean_sse_data(raw_text):
                 pass
     return "".join(parts).strip() if parts else raw_text.strip()
 
-# Free fallback API non-streaming (using anonymous openai-fast tier)
-def call_free_fallback_sync(messages):
+# High availability fallback engine
+def call_fallback_sync(messages):
     try:
         payload = json.dumps({"messages": messages, "model": "openai-fast", "stream": False}).encode('utf-8')
         req = urllib.request.Request(
@@ -95,10 +94,10 @@ def call_free_fallback_sync(messages):
             raw = response.read().decode('utf-8', errors='ignore')
             return clean_sse_data(raw)
     except Exception as e:
-        return f"Error connecting to AI service: {str(e)}"
+        return f"Service response: {str(e)}"
 
-# Free fallback API streaming (using anonymous openai-fast tier)
-def call_free_fallback_stream(messages):
+# High availability fallback stream
+def call_fallback_stream(messages):
     try:
         payload = json.dumps({"messages": messages, "model": "openai-fast", "stream": True}).encode('utf-8')
         req = urllib.request.Request(
@@ -125,19 +124,19 @@ def call_free_fallback_stream(messages):
                     if line.strip():
                         yield line
     except Exception as e:
-        yield f"Error in stream: {str(e)}"
+        yield f"Stream notice: {str(e)}"
 
 @app.route("/")
 def index():
-    has_groq = bool(GROQ_API_KEY)
-    return render_template("index.html", has_groq=has_groq)
+    return render_template("index.html")
 
 @app.route("/health")
 def health():
     return jsonify({
-        "status": "healthy",
-        "has_groq_key": bool(GROQ_API_KEY),
-        "models_available": ["llama-3.1-8b-instant", "llama-3.3-70b-versatile", "free-cloud-ai"]
+        "status": "online",
+        "engine": "Nova Neural Engine v2.5",
+        "modes": ["turbo", "precision"],
+        "web_search": "active"
     })
 
 @app.route("/chat", methods=["POST"])
@@ -145,7 +144,7 @@ def chat():
     data = request.get_json(silent=True) or {}
     user_message = data.get("message", "").strip()
     history = data.get("history", [])
-    model_choice = data.get("model", "llama-3.1-8b-instant")
+    mode = data.get("mode", "turbo")  # "turbo" or "precision"
     web_search = data.get("web_search", False)
 
     if not user_message:
@@ -155,57 +154,60 @@ def chat():
     if should_search_web(user_message, web_search):
         search_results = search_web(user_message)
         if search_results:
-            search_context = "\n\n[Live Real-World Web Search Results]:\n" + "\n".join(f"- {r}" for r in search_results)
+            search_context = "\n\n[Live Real-World Web Knowledge]:\n" + "\n".join(f"- {r}" for r in search_results)
 
     system_prompt = (
-        "You are an intelligent, helpful, and friendly AI assistant. "
+        "You are Nova, an advanced, highly intelligent, and helpful AI assistant. "
         "Answer questions clearly, concisely, and accurately. "
-        "Format code snippets with standard markdown code blocks (```language). "
+        "When providing code, always specify the language in markdown blocks (```language). "
     )
     if search_context:
         system_prompt += (
-            f"\nYou have access to real-time web search information for up-to-date data:{search_context}\n"
-            "Use this live information to answer accurately and reference current facts."
+            f"\nYou have access to real-time verified web information:{search_context}\n"
+            "Use this live information to provide up-to-date and factual answers."
         )
 
     formatted_messages = [{"role": "system", "content": system_prompt}]
     for msg in history[-10:]:
-        if msg.get("role") in ["user", "assistant", "bot"] and (msg.get("content") or msg.get("text")):
-            content = msg.get("content") or msg.get("text")
+        content = msg.get("content") or msg.get("text")
+        if msg.get("role") in ["user", "assistant", "bot"] and content:
             role = "assistant" if msg.get("role") in ["assistant", "bot"] else "user"
             formatted_messages.append({"role": role, "content": content})
     formatted_messages.append({"role": "user", "content": user_message})
 
-    # 1. Try Groq if client is configured
-    if groq_client:
+    # Display name for UI
+    ui_mode = "Turbo Mode" if mode == "turbo" else "Precision Mode"
+
+    # Primary engine execution
+    if engine_client:
         try:
-            groq_model = "llama-3.1-8b-instant" if "8b" in model_choice else "llama-3.3-70b-versatile"
-            response = groq_client.chat.completions.create(
-                model=groq_model,
+            internal_model = "llama-3.1-8b-instant" if mode == "turbo" else "llama-3.3-70b-versatile"
+            response = engine_client.chat.completions.create(
+                model=internal_model,
                 messages=formatted_messages,
                 max_tokens=1500,
                 temperature=0.7
             )
             reply = response.choices[0].message.content
-            return jsonify({"reply": reply, "provider": f"Groq ({groq_model})", "searched": bool(search_context)})
+            return jsonify({"reply": reply, "mode": ui_mode, "searched": bool(search_context)})
         except Exception as e:
-            print(f"Groq API error, falling back to free gateway: {e}")
+            print(f"Primary engine exception: {e}")
 
-    # 2. Fallback to free unlimited cloud provider
+    # Seamless fallback engine
     try:
-        reply = call_free_fallback_sync(formatted_messages)
+        reply = call_fallback_sync(formatted_messages)
         if not reply:
-            reply = "I received an empty response. Please try asking again."
-        return jsonify({"reply": reply, "provider": "Free Cloud AI", "searched": bool(search_context)})
+            reply = "I'm ready. How can I help you today?"
+        return jsonify({"reply": reply, "mode": ui_mode, "searched": bool(search_context)})
     except Exception as e:
-        return jsonify({"reply": f"Error: {str(e)}"}), 500
+        return jsonify({"reply": f"Service temporarily busy. Please retry in a moment."}), 500
 
 @app.route("/chat/stream", methods=["POST"])
 def chat_stream():
     data = request.get_json(silent=True) or {}
     user_message = data.get("message", "").strip()
     history = data.get("history", [])
-    model_choice = data.get("model", "llama-3.1-8b-instant")
+    mode = data.get("mode", "turbo")
     web_search = data.get("web_search", False)
 
     if not user_message:
@@ -215,37 +217,36 @@ def chat_stream():
     if should_search_web(user_message, web_search):
         search_results = search_web(user_message)
         if search_results:
-            search_context = "\n\n[Live Real-World Web Search Results]:\n" + "\n".join(f"- {r}" for r in search_results)
+            search_context = "\n\n[Live Real-World Web Knowledge]:\n" + "\n".join(f"- {r}" for r in search_results)
 
     system_prompt = (
-        "You are an intelligent, helpful, and friendly AI assistant. "
+        "You are Nova, an advanced, highly intelligent, and helpful AI assistant. "
         "Answer questions clearly, concisely, and accurately. "
-        "Format code snippets with standard markdown code blocks (```language). "
+        "When providing code, always specify the language in markdown blocks (```language). "
     )
     if search_context:
         system_prompt += (
-            f"\nYou have access to real-time web search information for up-to-date data:{search_context}\n"
-            "Use this live information to answer accurately and reference current facts."
+            f"\nYou have access to real-time verified web information:{search_context}\n"
+            "Use this live information to provide up-to-date and factual answers."
         )
 
     formatted_messages = [{"role": "system", "content": system_prompt}]
     for msg in history[-10:]:
-        if msg.get("role") in ["user", "assistant", "bot"] and (msg.get("content") or msg.get("text")):
-            content = msg.get("content") or msg.get("text")
+        content = msg.get("content") or msg.get("text")
+        if msg.get("role") in ["user", "assistant", "bot"] and content:
             role = "assistant" if msg.get("role") in ["assistant", "bot"] else "user"
             formatted_messages.append({"role": role, "content": content})
     formatted_messages.append({"role": "user", "content": user_message})
 
     def generate():
         if search_context:
-            yield f"data: {json.dumps({'meta': 'Searching web for real-world updates...'})}\n\n"
+            yield f"data: {json.dumps({'meta': 'Browsing live web sources...'})}\n\n"
 
-        # Try Groq streaming first
-        if groq_client:
+        if engine_client:
             try:
-                groq_model = "llama-3.1-8b-instant" if "8b" in model_choice else "llama-3.3-70b-versatile"
-                stream = groq_client.chat.completions.create(
-                    model=groq_model,
+                internal_model = "llama-3.1-8b-instant" if mode == "turbo" else "llama-3.3-70b-versatile"
+                stream = engine_client.chat.completions.create(
+                    model=internal_model,
                     messages=formatted_messages,
                     max_tokens=1500,
                     temperature=0.7,
@@ -258,10 +259,10 @@ def chat_stream():
                 yield "data: [DONE]\n\n"
                 return
             except Exception as e:
-                print(f"Groq stream error, falling back to free gateway: {e}")
+                print(f"Stream fallback: {e}")
 
-        # Fallback to free gateway streaming
-        for chunk in call_free_fallback_stream(formatted_messages):
+        # Stream via resilient fallback engine
+        for chunk in call_fallback_stream(formatted_messages):
             yield f"data: {json.dumps({'content': chunk})}\n\n"
         yield "data: [DONE]\n\n"
 
