@@ -11,16 +11,17 @@ load_dotenv()
 
 app = Flask(__name__)
 
-# Initialize AI engine
-GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "").strip()
+# Initialize AI engine (accepts NOVA_API_KEY or GROQ_API_KEY for seamless setup)
+PRIMARY_API_KEY = (os.environ.get("NOVA_API_KEY") or os.environ.get("GROQ_API_KEY") or "").strip()
 engine_client = None
 
-if GROQ_API_KEY:
+if PRIMARY_API_KEY:
     try:
         from groq import Groq
-        engine_client = Groq(api_key=GROQ_API_KEY)
+        engine_client = Groq(api_key=PRIMARY_API_KEY)
+        print("Nova Neural Engine initialized with primary accelerator.")
     except Exception as e:
-        print(f"Warning: Primary engine initialization note: {e}")
+        print(f"Primary accelerator initialization notice: {e}")
 
 # Web search helper using DuckDuckGo HTML (zero dependencies, completely private)
 def search_web(query, max_results=4):
@@ -81,7 +82,7 @@ def clean_sse_data(raw_text):
                 pass
     return "".join(parts).strip() if parts else raw_text.strip()
 
-# High availability fallback engine
+# High availability fallback engine (completely white-labeled, never exposes raw errors)
 def call_fallback_sync(messages):
     try:
         payload = json.dumps({"messages": messages, "model": "openai-fast", "stream": False}).encode('utf-8')
@@ -90,41 +91,13 @@ def call_fallback_sync(messages):
             data=payload,
             headers={"Content-Type": "application/json", "User-Agent": "Mozilla/5.0"}
         )
-        with urllib.request.urlopen(req, timeout=30) as response:
+        with urllib.request.urlopen(req, timeout=25) as response:
             raw = response.read().decode('utf-8', errors='ignore')
-            return clean_sse_data(raw)
+            cleaned = clean_sse_data(raw)
+            return cleaned if cleaned else "I am ready. How can I assist you?"
     except Exception as e:
-        return f"Service response: {str(e)}"
-
-# High availability fallback stream
-def call_fallback_stream(messages):
-    try:
-        payload = json.dumps({"messages": messages, "model": "openai-fast", "stream": True}).encode('utf-8')
-        req = urllib.request.Request(
-            "https://text.pollinations.ai/",
-            data=payload,
-            headers={"Content-Type": "application/json", "User-Agent": "Mozilla/5.0"}
-        )
-        with urllib.request.urlopen(req, timeout=40) as response:
-            for raw_line in response:
-                line = raw_line.decode('utf-8', errors='ignore')
-                if line.startswith("data: "):
-                    if "[DONE]" in line:
-                        break
-                    try:
-                        data = json.loads(line[6:].strip())
-                        choices = data.get("choices", [])
-                        if choices:
-                            chunk = choices[0].get("delta", {}).get("content", "")
-                            if chunk:
-                                yield chunk
-                    except Exception:
-                        pass
-                else:
-                    if line.strip():
-                        yield line
-    except Exception as e:
-        yield f"Stream notice: {str(e)}"
+        print(f"Fallback engine note: {e}")
+        return "Nova AI is currently processing high traffic. Please retry your message in a moment."
 
 @app.route("/")
 def index():
@@ -144,7 +117,7 @@ def chat():
     data = request.get_json(silent=True) or {}
     user_message = data.get("message", "").strip()
     history = data.get("history", [])
-    mode = data.get("mode", "turbo")  # "turbo" or "precision"
+    mode = data.get("mode", "turbo")
     web_search = data.get("web_search", False)
 
     if not user_message:
@@ -175,7 +148,6 @@ def chat():
             formatted_messages.append({"role": role, "content": content})
     formatted_messages.append({"role": "user", "content": user_message})
 
-    # Display name for UI
     ui_mode = "Turbo Mode" if mode == "turbo" else "Precision Mode"
 
     # Primary engine execution
@@ -191,16 +163,15 @@ def chat():
             reply = response.choices[0].message.content
             return jsonify({"reply": reply, "mode": ui_mode, "searched": bool(search_context)})
         except Exception as e:
-            print(f"Primary engine exception: {e}")
+            print(f"Primary engine note: {e}")
 
     # Seamless fallback engine
     try:
         reply = call_fallback_sync(formatted_messages)
-        if not reply:
-            reply = "I'm ready. How can I help you today?"
         return jsonify({"reply": reply, "mode": ui_mode, "searched": bool(search_context)})
     except Exception as e:
-        return jsonify({"reply": f"Service temporarily busy. Please retry in a moment."}), 500
+        print(f"Chat route error: {e}")
+        return jsonify({"reply": "Nova AI is currently busy. Please retry in a moment."}), 500
 
 @app.route("/chat/stream", methods=["POST"])
 def chat_stream():
@@ -259,11 +230,13 @@ def chat_stream():
                 yield "data: [DONE]\n\n"
                 return
             except Exception as e:
-                print(f"Stream fallback: {e}")
+                print(f"Primary stream accelerator note: {e}")
 
-        # Stream via resilient fallback engine
-        for chunk in call_fallback_stream(formatted_messages):
-            yield f"data: {json.dumps({'content': chunk})}\n\n"
+        # Ultra-resilient token stream generator
+        full_reply = call_fallback_sync(formatted_messages)
+        chunks = re.findall(r'\S+|\s+', full_reply)
+        for c in chunks:
+            yield f"data: {json.dumps({'content': c})}\n\n"
         yield "data: [DONE]\n\n"
 
     return Response(stream_with_context(generate()), mimetype="text/event-stream")
