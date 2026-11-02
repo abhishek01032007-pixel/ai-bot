@@ -1240,6 +1240,258 @@ body{
   color:var(--text);
   border-color:var(--accent);
 }
+
+/* ==============================================================================
+   DEDICATED SETTINGS SCREEN (Clean Layered Textured Architecture)
+   ============================================================================== */
+.settings-screen{
+  position:fixed;
+  top:0;
+  left:0;
+  right:0;
+  bottom:0;
+  z-index:900;
+  background:var(--bg);
+  background-image:radial-gradient(circle at 50% 0%, rgba(16,185,129,0.035), transparent 60%);
+  overflow-y:auto;
+  overflow-x:hidden;
+  display:none;
+  flex-direction:column;
+  align-items:center;
+  padding:24px 20px 80px;
+  -webkit-overflow-scrolling:touch;
+}
+.settings-screen.active{
+  display:flex;
+  animation:settingsFadeIn .22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes settingsFadeIn{
+  from{opacity:0;transform:translateY(8px)}
+  to{opacity:1;transform:translateY(0)}
+}
+.settings-container{
+  width:100%;
+  max-width:800px;
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+}
+.settings-topbar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  width:100%;
+  margin-bottom:4px;
+}
+.settings-back-btn{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:8px 16px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:9px;
+  color:var(--text);
+  font-size:13.5px;
+  font-weight:600;
+  cursor:pointer;
+  box-shadow:var(--shadow-sm);
+  transition:all .16s ease;
+  font-family:inherit;
+}
+.settings-back-btn:hover{
+  background:var(--surface-hover);
+  border-color:var(--accent);
+  transform:translateX(-2px);
+}
+.settings-tier-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:5px 12px;
+  border-radius:20px;
+  font-size:12px;
+  font-weight:600;
+  background:rgba(16,185,129,0.12);
+  color:var(--accent);
+  border:1px solid var(--accent-border);
+}
+.settings-header-desc h1{
+  font-size:22px;
+  font-weight:700;
+  letter-spacing:-0.02em;
+  color:var(--text);
+  margin-bottom:4px;
+}
+.settings-header-desc p{
+  font-size:13px;
+  color:var(--text-muted);
+  line-height:1.5;
+}
+
+/* Layered Textured Card */
+.layered-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:20px 22px;
+  box-shadow:var(--shadow-sm);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+  position:relative;
+  transition:border-color .18s ease;
+}
+.layered-card:hover{
+  border-color:rgba(16,185,129,0.32);
+}
+.layered-card-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+.layered-card-title-group{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.layered-card-icon{
+  width:32px;
+  height:32px;
+  border-radius:8px;
+  background:rgba(16,185,129,0.1);
+  color:var(--accent);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:15px;
+}
+.layered-card-title{
+  font-size:15.5px;
+  font-weight:700;
+  color:var(--text);
+  letter-spacing:-0.01em;
+}
+.layered-card-sub{
+  font-size:12px;
+  color:var(--text-dim);
+}
+.layered-banner-info{
+  background:var(--bg);
+  border:1px solid var(--border-subtle);
+  border-left:3px solid var(--accent);
+  border-radius:8px;
+  padding:10px 14px;
+  font-size:12px;
+  line-height:1.5;
+  color:var(--text-muted);
+}
+
+/* Metrics Grid */
+.quota-grid{
+  display:grid;
+  grid-template-columns:repeat(4, 1fr);
+  gap:10px;
+}
+@media(max-width:640px){
+  .quota-grid{
+    grid-template-columns:repeat(2, 1fr);
+  }
+  .settings-screen{
+    padding:16px 14px 60px;
+  }
+}
+.metric-box{
+  background:var(--surface-elevated);
+  border:1px solid var(--border-subtle);
+  border-radius:10px;
+  padding:10px 12px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.metric-box-label{
+  font-size:10.5px;
+  font-weight:600;
+  color:var(--text-dim);
+  text-transform:uppercase;
+  letter-spacing:0.04em;
+}
+.metric-box-val{
+  font-size:13.5px;
+  font-weight:700;
+  color:var(--text);
+  font-family:'JetBrains Mono',monospace;
+}
+
+/* Preset Chips */
+.preset-chips-wrap{
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+  margin-top:2px;
+}
+.preset-chip{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  padding:5px 10px;
+  font-size:11.5px;
+  font-family:'JetBrains Mono',monospace;
+  border-radius:7px;
+  border:1px solid var(--border);
+  background:var(--surface-elevated);
+  color:var(--text-muted);
+  cursor:pointer;
+  transition:all .14s ease;
+}
+.preset-chip:hover{
+  background:var(--surface-hover);
+  color:var(--text);
+  border-color:var(--accent);
+}
+.preset-chip.active{
+  background:rgba(16,185,129,0.12);
+  color:var(--accent);
+  border-color:var(--accent);
+  font-weight:600;
+}
+
+/* Settings Bottom Actions */
+.settings-bottom-actions{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:12px;
+  padding-top:8px;
+}
+.theme-picker-group{
+  display:flex;
+  gap:10px;
+}
+.theme-choice-btn{
+  flex:1;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  padding:10px 16px;
+  border-radius:9px;
+  border:1px solid var(--border);
+  background:var(--surface-elevated);
+  color:var(--text);
+  font-size:13px;
+  font-weight:600;
+  cursor:pointer;
+  transition:all .15s ease;
+  font-family:inherit;
+}
+.theme-choice-btn.active, .theme-choice-btn:hover{
+  border-color:var(--accent);
+  background:rgba(16,185,129,0.08);
+  color:var(--accent);
+}
 </style>
 </head>
 <body>
@@ -1439,48 +1691,149 @@ body{
   </div>
 </div>
 
-<!-- 4. MULTI-PROVIDER AI & 7-HOUR QUOTA SETTINGS MODAL -->
-<div class="modal-overlay" id="key-modal-overlay" onclick="handleModalOverlayClick(event, 'key-modal-overlay')">
-  <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="key-modal-title" style="max-width:480px;max-height:88vh;overflow-y:auto;">
-    <div class="modal-header">
-      <div class="modal-title-wrap">
-        <div class="modal-icon-badge accent">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-        </div>
-        <h3 class="modal-title" id="key-modal-title">Multi-Provider AI & Quota</h3>
-      </div>
-      <button class="modal-close-btn" onclick="closeModal('key-modal-overlay')" title="Cancel">✕</button>
+<!-- 4. DEDICATED SETTINGS SCREEN (Clean Layered Textured Architecture) -->
+<div class="settings-screen" id="settings-screen" role="region" aria-label="Engine and AI Model Settings">
+  <div class="settings-container">
+    
+    <!-- Top Bar with Back Button & Tier Indicator -->
+    <div class="settings-topbar">
+      <button type="button" class="settings-back-btn" onclick="closeSettingsScreen()" title="Return to active conversation">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        <span>Back to Chat</span>
+      </button>
+
+      <span class="settings-tier-badge" id="settings-tier-badge">
+        <span>⚡</span>
+        <span id="settings-tier-name">Default (Shared Groq)</span>
+      </span>
     </div>
 
-    <!-- 7-HOUR PER-IP TOKEN TRACKER CARD -->
-    <div class="quota-card" id="quota-card">
-      <div class="quota-card-header">
-        <div class="quota-title-wrap">
-          <span class="quota-chip" id="quota-tier-badge">Free Tier</span>
-          <span style="font-size:12px;color:var(--text-dim);" id="quota-ip-label">IP: Detecting...</span>
+    <!-- Title & Description -->
+    <div class="settings-header-desc">
+      <h1>Engine & AI Model Settings</h1>
+      <p>Configure model selection without restrictions, securely connect personal API keys, and monitor your 7-hour usage quota.</p>
+    </div>
+
+    <!-- LAYER 1: 7-HOUR PER-IP TOKEN TRACKER & QUOTA CARD (TEXTURED) -->
+    <div class="layered-card">
+      <div class="layered-card-header">
+        <div class="layered-card-title-group">
+          <div class="layered-card-icon">⚡</div>
+          <div>
+            <div class="layered-card-title">Token Quota & Usage Limits</div>
+            <div class="layered-card-sub">7-hour sliding window per user IP address</div>
+          </div>
         </div>
-        <span class="quota-reset-pill" id="quota-reset-countdown">Resets in 7h 0m</span>
+        <span class="quota-reset-pill" id="settings-reset-countdown">Resets in 7h 0m</span>
       </div>
-      
-      <div class="quota-bar-wrap">
-        <div class="quota-bar-fill" id="quota-bar-fill" style="width: 0%;"></div>
+
+      <div class="layered-banner-info" id="settings-quota-banner">
+        <strong>Shared Groq Engine:</strong> Default users share our server's high-speed Groq accelerator (<code style="font-family:'JetBrains Mono',monospace;">llama-3.1-8b</code> / <code style="font-family:'JetBrains Mono',monospace;">llama-3.3-70b</code>). Default access is <strong>strictly capped at 20,000 tokens per 7-hour cycle per IP</strong>. Connect your personal key below to unlock unlimited tokens.
       </div>
-      
-      <div class="quota-stats-row">
-        <span id="quota-used-text">0 / 20,000 tokens</span>
-        <span id="quota-remaining-text" style="color:var(--accent);font-weight:600;">20,000 remaining</span>
+
+      <div class="quota-bar-wrap" style="height:9px;">
+        <div class="quota-bar-fill" id="settings-quota-bar" style="width: 0%;"></div>
       </div>
-      <div style="font-size:11px;color:var(--text-dim);margin-top:2px;line-height:1.4;">
-        ℹ️ Free tier resets every <strong>7 hours</strong> per user IP. Connecting any personal key unlocks <strong>Unlimited Tokens</strong>.
+
+      <!-- 4-Metric Grid -->
+      <div class="quota-grid">
+        <div class="metric-box">
+          <span class="metric-box-label">Tokens Used</span>
+          <span class="metric-box-val" id="settings-used-text">0 / 20k</span>
+        </div>
+        <div class="metric-box">
+          <span class="metric-box-label">Remaining</span>
+          <span class="metric-box-val" id="settings-remaining-text" style="color:var(--accent);">20,000</span>
+        </div>
+        <div class="metric-box">
+          <span class="metric-box-label">User IP (Tracked)</span>
+          <span class="metric-box-val" id="settings-ip-text">Detecting...</span>
+        </div>
+        <div class="metric-box">
+          <span class="metric-box-label">Reset Window</span>
+          <span class="metric-box-val" id="settings-cycle-text">Every 7h</span>
+        </div>
       </div>
     </div>
 
-    <form onsubmit="event.preventDefault(); saveCustomKey();" style="display:flex;flex-direction:column;gap:13px;margin-top:6px;">
+    <!-- LAYER 2: UNFORCED MODEL SELECTOR & CUSTOM IDENTIFIER -->
+    <div class="layered-card">
+      <div class="layered-card-header">
+        <div class="layered-card-title-group">
+          <div class="layered-card-icon">🤖</div>
+          <div>
+            <div class="layered-card-title">Model Selection (Unforced)</div>
+            <div class="layered-card-sub">Use any model supported by your provider or account</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="font-size:12.5px;color:var(--text-muted);line-height:1.5;">
+        You are never locked into default models. You can enter any custom model name (e.g. <code>gemini-2.0-flash</code>, <code>claude-3-7-sonnet-20250219</code>, <code>astro</code>, <code>gpt-4o</code>, <code>deepseek-chat</code>) or choose from fast presets below:
+      </div>
+
+      <!-- Quick Preset Model Chips -->
+      <div>
+        <label style="display:block;margin-bottom:6px;font-size:11.5px;color:var(--text-dim);font-weight:600;text-transform:uppercase;letter-spacing:0.03em;">Quick Model Presets:</label>
+        <div class="preset-chips-wrap" id="preset-chips-wrap">
+          <button type="button" class="preset-chip" onclick="applyPresetChip('gemini-2.0-flash', 'gemini')">⚡ gemini-2.0-flash</button>
+          <button type="button" class="preset-chip" onclick="applyPresetChip('gemini-1.5-pro', 'gemini')">🧠 gemini-1.5-pro</button>
+          <button type="button" class="preset-chip" onclick="applyPresetChip('llama-3.3-70b-versatile', 'groq')">⚡ llama-3.3-70b</button>
+          <button type="button" class="preset-chip" onclick="applyPresetChip('claude-3-7-sonnet-20250219', 'anthropic')">🧠 claude-3-7-sonnet</button>
+          <button type="button" class="preset-chip" onclick="applyPresetChip('claude-3-5-haiku-20241022', 'anthropic')">⚡ claude-3-5-haiku</button>
+          <button type="button" class="preset-chip" onclick="applyPresetChip('gpt-4o', 'openai')">🧠 gpt-4o</button>
+          <button type="button" class="preset-chip" onclick="applyPresetChip('gpt-4o-mini', 'openai')">⚡ gpt-4o-mini</button>
+          <button type="button" class="preset-chip" onclick="applyPresetChip('deepseek-chat', 'openai')">⚡ deepseek-chat</button>
+          <button type="button" class="preset-chip" onclick="applyPresetChip('astro', 'openrouter')">🚀 astro</button>
+          <button type="button" class="preset-chip" onclick="resetCustomModel()" style="color:var(--text-dim);border-style:dashed;">↺ Auto / Default</button>
+        </div>
+      </div>
+
+      <!-- Custom Model Input -->
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <label for="settings-custom-model-input" style="font-size:12px;color:var(--text-dim);font-weight:600;">Custom Model Identifier (Direct Pass-Through):</label>
+          <button type="button" class="clear-all-link" onclick="resetCustomModel()" style="font-size:11px;">Clear</button>
+        </div>
+        <input type="text" id="settings-custom-model-input" class="modal-input" placeholder="e.g. gemini-2.0-flash, claude-3-7-sonnet, astro, gpt-4o..." autocomplete="off" spellcheck="false" oninput="onCustomModelInput(this.value)" style="font-family:'JetBrains Mono',monospace;font-size:13px;" />
+        <div style="margin-top:5px;font-size:11px;color:var(--text-dim);">
+          Exact model string sent directly to backend and provider API.
+        </div>
+      </div>
+
+      <!-- Active Model Preview Box -->
+      <div class="model-info-box" id="settings-model-info-box">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+          <span style="color:var(--text);font-weight:600;" id="settings-model-provider-name">Auto-Detect</span>
+          <span style="color:var(--accent);font-size:11px;font-weight:600;" id="settings-model-status-chip">Default Models</span>
+        </div>
+        <div style="font-size:12px;color:var(--text-muted);display:flex;flex-direction:column;gap:3px;" id="settings-model-pair-list">
+          <div>⚡ <strong>Turbo:</strong> <span id="settings-model-turbo-name">llama-3.1-8b-instant / gemini-1.5-flash</span></div>
+          <div>🧠 <strong>Precision:</strong> <span id="settings-model-precision-name">llama-3.3-70b-versatile / gemini-1.5-pro</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LAYER 3: PERSONAL API KEY INTEGRATION (BYOK) -->
+    <div class="layered-card">
+      <div class="layered-card-header">
+        <div class="layered-card-title-group">
+          <div class="layered-card-icon">🔑</div>
+          <div>
+            <div class="layered-card-title">Personal API Key (BYOK)</div>
+            <div class="layered-card-sub">Bring Your Own Key to unlock unlimited access</div>
+          </div>
+        </div>
+      </div>
+
       <!-- Provider Selector -->
       <div>
-        <label for="provider-select" style="display:block;margin-bottom:6px;font-size:12px;color:var(--text-dim);font-weight:600;">Select AI Provider:</label>
-        <select id="provider-select" class="modal-input" onchange="handleProviderChange(this.value)" style="cursor:pointer;background:var(--surface);">
-          <option value="auto">✨ Auto-Detect (From Key Prefix)</option>
+        <label for="settings-provider-select" style="display:block;margin-bottom:6px;font-size:12px;color:var(--text-dim);font-weight:600;">Target AI Provider:</label>
+        <select id="settings-provider-select" class="modal-input" onchange="handleSettingsProviderChange(this.value)" style="cursor:pointer;background:var(--surface);">
+          <option value="auto">✨ Auto-Detect (From Key Signature)</option>
           <option value="gemini">Google Gemini (AIza...)</option>
           <option value="groq">Groq Cloud (gsk_...)</option>
           <option value="openai">OpenAI (sk-...)</option>
@@ -1489,33 +1842,61 @@ body{
         </select>
       </div>
 
-      <!-- Default Model Information Display -->
-      <div class="model-info-box" id="model-info-box">
-        <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
-          <span style="color:var(--text);font-weight:600;" id="model-provider-name">Auto-Detect</span>
-          <span style="color:var(--accent);font-size:11px;font-weight:600;">Default Models</span>
-        </div>
-        <div style="font-size:12px;color:var(--text-muted);display:flex;flex-direction:column;gap:3px;" id="model-pair-list">
-          <div>⚡ <strong>Turbo:</strong> <span id="model-turbo-name">llama-3.1-8b-instant / gemini-1.5-flash</span></div>
-          <div>🧠 <strong>Precision:</strong> <span id="model-precision-name">llama-3.3-70b-versatile / gemini-1.5-pro</span></div>
-        </div>
-      </div>
-
-      <!-- API Key Input -->
+      <!-- Key Input -->
       <div>
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-          <label for="custom-key-input" style="font-size:12px;color:var(--text-dim);font-weight:600;">Personal API Key (BYOK):</label>
-          <button type="button" class="clear-all-link" onclick="toggleKeyVisibility()" id="key-vis-toggle" style="font-size:11px;">Show</button>
+          <label for="settings-custom-key-input" style="font-size:12px;color:var(--text-dim);font-weight:600;">API Key Token:</label>
+          <button type="button" class="clear-all-link" onclick="toggleSettingsKeyVisibility()" id="settings-key-vis-toggle" style="font-size:11px;">Show</button>
         </div>
-        <input type="password" id="custom-key-input" class="modal-input" placeholder="Paste Gemini, Groq, OpenAI, or Claude key..." autocomplete="off" spellcheck="false" oninput="onKeyInput(this.value)" />
-        <div id="key-status-hint" style="margin-top:6px;font-size:11.5px;color:var(--text-dim);"></div>
+        <input type="password" id="settings-custom-key-input" class="modal-input" placeholder="Paste Gemini, Groq, Claude, OpenAI or OpenRouter key..." autocomplete="off" spellcheck="false" oninput="onSettingsKeyInput(this.value)" />
+        <div id="settings-key-hint" style="margin-top:6px;font-size:11.5px;color:var(--text-dim);"></div>
       </div>
 
-      <div class="modal-actions">
-        <button type="button" class="modal-btn cancel" onclick="removeCustomKey()">Remove Key</button>
-        <button type="submit" class="modal-btn primary">Save & Connect</button>
+      <div style="font-size:11.5px;color:var(--text-dim);line-height:1.45;background:var(--bg);padding:10px 12px;border-radius:8px;border:1px solid var(--border-subtle);">
+        🔒 <strong>Direct & Sandboxed:</strong> Keys are held locally in your browser's private <code>localStorage</code>. Requests are sent over TLS directly to provider endpoints without database storage or plaintext logging.
       </div>
-    </form>
+    </div>
+
+    <!-- LAYER 4: APPEARANCE & THEME SWITCHER -->
+    <div class="layered-card">
+      <div class="layered-card-header">
+        <div class="layered-card-title-group">
+          <div class="layered-card-icon">🎨</div>
+          <div>
+            <div class="layered-card-title">Appearance & Color Theme</div>
+            <div class="layered-card-sub">Warm Stone, Matte Obsidian, Emerald Mint (Zero Blue)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="theme-picker-group">
+        <button type="button" class="theme-choice-btn" id="theme-btn-light" onclick="chooseTheme('light')">
+          <span>☀️</span>
+          <span>Warm Stone (Light)</span>
+        </button>
+        <button type="button" class="theme-choice-btn" id="theme-btn-dark" onclick="chooseTheme('dark')">
+          <span>🌙</span>
+          <span>Matte Obsidian (Dark)</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- LAYER 5: ACTIONS & CONFIRMATION BAR -->
+    <div class="settings-bottom-actions">
+      <button type="button" class="modal-btn cancel" onclick="removeSettingsKey()" style="padding:10px 16px;">
+        ✕ Clear Key (Revert to Shared 20k)
+      </button>
+
+      <div style="display:flex;align-items:center;gap:10px;">
+        <button type="button" class="settings-back-btn" onclick="closeSettingsScreen()">
+          Cancel
+        </button>
+        <button type="button" class="modal-btn primary" onclick="saveSettingsScreen()" style="padding:10px 22px;">
+          ✓ Save Settings & Apply
+        </button>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -1539,10 +1920,12 @@ body{
 
   // Apply Theme Function
   function applyTheme(theme){
+    currentTheme = theme;
     document.documentElement.setAttribute('data-theme', theme);
     const glyph = document.getElementById('theme-glyph');
     if(glyph) glyph.textContent = theme === 'light' ? '🌙' : '☀️';
     localStorage.setItem(THEME_KEY, theme);
+    if(typeof updateThemeButtons === 'function') updateThemeButtons();
   }
 
   function toggleTheme(){
@@ -1658,13 +2041,13 @@ body{
     }
   }
 
-  // Global Escape Listener to Dismiss Modals
+  // Global Escape Listener to Dismiss Modals & Settings Screen
   document.addEventListener('keydown', (e) => {
     if(e.key === 'Escape'){
+      closeSettingsScreen();
       closeModal('delete-modal-overlay');
       closeModal('rename-modal-overlay');
       closeModal('clear-modal-overlay');
-      closeModal('key-modal-overlay');
     }
   });
 
@@ -1672,8 +2055,8 @@ body{
     gemini: { name: 'Google Gemini', turbo: 'gemini-1.5-flash', precision: 'gemini-1.5-pro' },
     groq: { name: 'Groq Cloud', turbo: 'llama-3.1-8b-instant', precision: 'llama-3.3-70b-versatile' },
     openai: { name: 'OpenAI', turbo: 'gpt-4o-mini', precision: 'gpt-4o' },
-    anthropic: { name: 'Anthropic Claude', turbo: 'claude-3-5-haiku', precision: 'claude-3-5-sonnet' },
-    openrouter: { name: 'OpenRouter', turbo: 'meta-llama/llama-3.1-8b:free', precision: 'meta-llama/llama-3.3-70b' },
+    anthropic: { name: 'Anthropic Claude', turbo: 'claude-3-5-haiku-20241022', precision: 'claude-3-5-sonnet-20241022' },
+    openrouter: { name: 'OpenRouter / Open Cloud', turbo: 'meta-llama/llama-3.1-8b:free', precision: 'meta-llama/llama-3.3-70b' },
     auto: { name: 'Auto-Detect', turbo: 'llama-3.1-8b-instant / gemini-1.5-flash', precision: 'llama-3.3-70b / gemini-1.5-pro' }
   };
 
@@ -1709,14 +2092,15 @@ body{
       });
       if(!res.ok) return;
       const q = await res.json();
+      const hasPersonalKey = Boolean(q.has_personal_key || q.has_custom_key);
 
-      // Update Topbar Quota Pill
+      // 1. Update Topbar Quota Pill
       const navTokens = document.getElementById('nav-quota-tokens');
       const navTimer = document.getElementById('nav-quota-timer');
       if(navTokens && navTimer){
-        if(q.has_custom_key){
-          navTokens.textContent = '⚡ Unlimited';
-          navTimer.textContent = 'BYOK Key';
+        if(hasPersonalKey){
+          navTokens.textContent = '⚡ BYOK Active';
+          navTimer.textContent = 'Personal Quota';
         } else {
           const remK = (q.tokens_remaining / 1000).toFixed(1);
           navTokens.textContent = `⚡ ${remK}k tokens`;
@@ -1724,62 +2108,168 @@ body{
         }
       }
 
-      // Update Modal Quota Card
-      const tierBadge = document.getElementById('quota-tier-badge');
-      const ipLabel = document.getElementById('quota-ip-label');
-      const resetCountdown = document.getElementById('quota-reset-countdown');
-      const barFill = document.getElementById('quota-bar-fill');
-      const usedText = document.getElementById('quota-used-text');
-      const remainingText = document.getElementById('quota-remaining-text');
+      // 2. Update Settings Screen Elements
+      const tierBadge = document.getElementById('settings-tier-badge');
+      const tierName = document.getElementById('settings-tier-name');
+      const resetCountdown = document.getElementById('settings-reset-countdown');
+      const barFill = document.getElementById('settings-quota-bar');
+      const usedText = document.getElementById('settings-used-text');
+      const remainingText = document.getElementById('settings-remaining-text');
+      const ipText = document.getElementById('settings-ip-text');
+      const cycleText = document.getElementById('settings-cycle-text');
+      const banner = document.getElementById('settings-quota-banner');
 
-      if(tierBadge) tierBadge.textContent = q.has_custom_key ? 'Unlimited (BYOK)' : 'Free Tier (7-Hour Window)';
-      if(ipLabel) ipLabel.textContent = `IP: ${q.ip}`;
-      if(resetCountdown) resetCountdown.textContent = q.has_custom_key ? 'Always Active' : `Resets in ${q.resets_formatted}`;
+      if(tierBadge && tierName){
+        if(hasPersonalKey){
+          tierBadge.style.background = 'rgba(16,185,129,0.14)';
+          tierBadge.style.color = 'var(--accent)';
+          tierName.textContent = 'Personal Key (BYOK Account)';
+        } else {
+          tierBadge.style.background = 'rgba(245,158,11,0.12)';
+          tierBadge.style.color = '#f59e0b';
+          tierName.textContent = 'Default User (Shared Groq · 20k Capped)';
+        }
+      }
+
+      if(resetCountdown){
+        resetCountdown.textContent = hasPersonalKey ? 'Personal Limit Active' : `Resets in ${q.resets_formatted}`;
+      }
+
       if(barFill){
-        const pct = q.has_custom_key ? 0 : q.percent_used;
+        const pct = hasPersonalKey ? 0 : q.percent_used;
         barFill.style.width = pct + '%';
         barFill.style.background = pct > 80 ? '#ef4444' : pct > 50 ? '#f59e0b' : 'var(--accent)';
       }
+
       if(usedText){
-        usedText.textContent = q.has_custom_key 
-          ? `${q.request_count} requests processed` 
-          : `${q.tokens_used.toLocaleString()} / 20,000 tokens`;
+        usedText.textContent = hasPersonalKey
+          ? `${q.request_count} requests`
+          : `${q.tokens_used.toLocaleString()} / 20k`;
       }
+
       if(remainingText){
-        remainingText.textContent = q.has_custom_key 
-          ? 'Unlimited Tokens' 
-          : `${q.tokens_remaining.toLocaleString()} remaining`;
+        remainingText.textContent = hasPersonalKey
+          ? 'Personal Quota'
+          : `${q.tokens_remaining.toLocaleString()}`;
+      }
+
+      if(ipText){
+        ipText.textContent = q.ip || 'Local Client';
+      }
+
+      if(cycleText){
+        cycleText.textContent = hasPersonalKey ? 'BYOK Tier' : '7h Rolling';
+      }
+
+      if(banner){
+        if(hasPersonalKey){
+          banner.innerHTML = '<strong>Personal Key Connected:</strong> Your requests route directly to your personal provider account with zero 20,000-token caps from our shared engine.';
+          banner.style.borderLeftColor = 'var(--accent)';
+        } else {
+          banner.innerHTML = '<strong>Shared Groq Engine:</strong> Default users share our server’s high-speed Groq accelerator (<code>llama-3.1-8b</code> / <code>llama-3.3-70b</code>). Default access is <strong>strictly capped at 20,000 tokens per 7-hour cycle per IP</strong>. Connect your personal key below to unlock unlimited tokens.';
+          banner.style.borderLeftColor = '#f59e0b';
+        }
       }
     } catch(err){
       console.warn('Quota fetch error:', err);
     }
   }
 
-  function handleProviderChange(provider){
-    localStorage.setItem('nova_custom_provider', provider);
-    const pInfo = PROVIDER_MODELS[provider] || PROVIDER_MODELS.auto;
-    document.getElementById('model-provider-name').textContent = pInfo.name;
-    document.getElementById('model-turbo-name').textContent = pInfo.turbo;
-    document.getElementById('model-precision-name').textContent = pInfo.precision;
+  function handleSettingsProviderChange(provider){
+    const sel = document.getElementById('settings-provider-select');
+    if(sel && sel.value !== provider) sel.value = provider;
+    updateSettingsModelDisplay();
   }
 
-  function onKeyInput(value){
-    const sel = document.getElementById('provider-select');
-    const hint = document.getElementById('key-status-hint');
-    if(!value.trim()){
-      hint.innerHTML = '<span style="color:var(--text-dim);">No key entered. Free Tier active (20,000 tokens/7h).</span>';
+  function updateSettingsModelDisplay(){
+    const providerSel = document.getElementById('settings-provider-select');
+    const provider = providerSel ? providerSel.value : 'auto';
+    const customModelInput = document.getElementById('settings-custom-model-input');
+    const customModel = customModelInput ? customModelInput.value.trim() : '';
+
+    const pInfo = PROVIDER_MODELS[provider] || PROVIDER_MODELS.auto;
+    const nameEl = document.getElementById('settings-model-provider-name');
+    const statusChip = document.getElementById('settings-model-status-chip');
+    const turboEl = document.getElementById('settings-model-turbo-name');
+    const precisionEl = document.getElementById('settings-model-precision-name');
+
+    if(nameEl) nameEl.textContent = pInfo.name;
+
+    if(customModel){
+      if(statusChip){
+        statusChip.textContent = 'Custom Model Active';
+        statusChip.style.color = 'var(--accent)';
+      }
+      if(turboEl) turboEl.innerHTML = `<span style="color:var(--accent);font-weight:600;">${escapeHtml(customModel)}</span> (Explicit Override)`;
+      if(precisionEl) precisionEl.innerHTML = `<span style="color:var(--accent);font-weight:600;">${escapeHtml(customModel)}</span> (Explicit Override)`;
+    } else {
+      if(statusChip){
+        statusChip.textContent = 'Default Models';
+        statusChip.style.color = 'var(--text-dim)';
+      }
+      if(turboEl) turboEl.textContent = pInfo.turbo;
+      if(precisionEl) precisionEl.textContent = pInfo.precision;
+    }
+  }
+
+  function onSettingsKeyInput(value){
+    const sel = document.getElementById('settings-provider-select');
+    const hint = document.getElementById('settings-key-hint');
+    if(!hint) return;
+    if(!value || !value.trim()){
+      hint.innerHTML = '<span style="color:var(--text-dim);">No personal key entered. Free Tier active (strictly capped at 20,000 tokens/7h on shared Groq).</span>';
       return;
     }
     const detected = detectKeyProvider(value);
-    if(sel.value === 'auto' && detected !== 'unknown'){
-      handleProviderChange(detected);
+    if(sel && (sel.value === 'auto' || sel.value === 'unknown') && detected !== 'unknown'){
+      sel.value = detected;
+      handleSettingsProviderChange(detected);
     }
-    hint.innerHTML = `<span style="color:var(--accent);">✓ ${hashPreview(value)} · Secured & Ready</span>`;
+    hint.innerHTML = `<span style="color:var(--accent);">✓ ${hashPreview(value)} · Valid Key Signature (Direct TLS Route)</span>`;
   }
 
-  function toggleKeyVisibility(){
-    const input = document.getElementById('custom-key-input');
-    const toggle = document.getElementById('key-vis-toggle');
+  function onCustomModelInput(value){
+    updateActivePresetChips(value.trim());
+    updateSettingsModelDisplay();
+  }
+
+  function applyPresetChip(modelName, providerHint){
+    const modelInput = document.getElementById('settings-custom-model-input');
+    if(modelInput) modelInput.value = modelName;
+    if(providerHint){
+      handleSettingsProviderChange(providerHint);
+    }
+    updateActivePresetChips(modelName);
+    updateSettingsModelDisplay();
+    showToast(`Model set to ${modelName}`, '🤖');
+  }
+
+  function resetCustomModel(){
+    const modelInput = document.getElementById('settings-custom-model-input');
+    if(modelInput) modelInput.value = '';
+    updateActivePresetChips('');
+    updateSettingsModelDisplay();
+    showToast('Reset to default provider models', '↺');
+  }
+
+  function updateActivePresetChips(activeModel){
+    const chips = document.querySelectorAll('#preset-chips-wrap .preset-chip');
+    chips.forEach(chip => {
+      const text = chip.textContent.trim();
+      if(!activeModel && text.includes('Auto / Default')){
+        chip.classList.add('active');
+      } else if(activeModel && text.includes(activeModel)){
+        chip.classList.add('active');
+      } else {
+        chip.classList.remove('active');
+      }
+    });
+  }
+
+  function toggleSettingsKeyVisibility(){
+    const input = document.getElementById('settings-custom-key-input');
+    const toggle = document.getElementById('settings-key-vis-toggle');
+    if(!input || !toggle) return;
     if(input.type === 'password'){
       input.type = 'text';
       toggle.textContent = 'Hide';
@@ -1789,40 +2279,97 @@ body{
     }
   }
 
-  function openKeyModal(){
-    const input = document.getElementById('custom-key-input');
-    const sel = document.getElementById('provider-select');
+  function chooseTheme(theme){
+    applyTheme(theme);
+    updateThemeButtons();
+  }
+
+  function updateThemeButtons(){
+    const btnLight = document.getElementById('theme-btn-light');
+    const btnDark = document.getElementById('theme-btn-dark');
+    if(btnLight && btnDark){
+      btnLight.classList.toggle('active', currentTheme === 'light');
+      btnDark.classList.toggle('active', currentTheme === 'dark');
+    }
+  }
+
+  function openSettingsScreen(){
+    closeDrawer();
+    const screen = document.getElementById('settings-screen');
+    const keyInput = document.getElementById('settings-custom-key-input');
+    const providerSel = document.getElementById('settings-provider-select');
+    const modelInput = document.getElementById('settings-custom-model-input');
+
     const savedKey = localStorage.getItem('nova_custom_api_key') || '';
     const savedProvider = localStorage.getItem('nova_custom_provider') || 'auto';
-    input.value = savedKey;
-    sel.value = savedProvider;
-    handleProviderChange(savedProvider);
-    onKeyInput(savedKey);
+    const savedModel = localStorage.getItem('nova_custom_model') || '';
+
+    if(keyInput) keyInput.value = savedKey;
+    if(providerSel) providerSel.value = savedProvider;
+    if(modelInput) modelInput.value = savedModel;
+
+    onSettingsKeyInput(savedKey);
+    updateActivePresetChips(savedModel);
+    updateSettingsModelDisplay();
+    updateThemeButtons();
     fetchQuota();
-    openModal('key-modal-overlay');
+
+    if(screen){
+      screen.classList.add('active');
+      screen.scrollTop = 0;
+    }
   }
 
-  function saveCustomKey(){
-    const input = document.getElementById('custom-key-input');
-    const sel = document.getElementById('provider-select');
-    const key = input.value.trim();
+  function closeSettingsScreen(){
+    const screen = document.getElementById('settings-screen');
+    if(screen){
+      screen.classList.remove('active');
+    }
+  }
+
+  function saveSettingsScreen(){
+    const keyInput = document.getElementById('settings-custom-key-input');
+    const providerSel = document.getElementById('settings-provider-select');
+    const modelInput = document.getElementById('settings-custom-model-input');
+
+    const key = keyInput ? keyInput.value.trim() : '';
+    const provider = providerSel ? providerSel.value : 'auto';
+    const customModel = modelInput ? modelInput.value.trim() : '';
+
     if(key){
       localStorage.setItem('nova_custom_api_key', key);
-      localStorage.setItem('nova_custom_provider', sel.value);
-      showToast('Personal API key securely connected!', '⚡');
+      localStorage.setItem('nova_custom_provider', provider);
+    } else {
+      localStorage.removeItem('nova_custom_api_key');
     }
+
+    if(customModel){
+      localStorage.setItem('nova_custom_model', customModel);
+    } else {
+      localStorage.removeItem('nova_custom_model');
+    }
+
     fetchQuota();
-    closeModal('key-modal-overlay');
+    showToast('Settings & AI Model saved!', '⚡');
+    closeSettingsScreen();
   }
 
-  function removeCustomKey(){
+  function removeSettingsKey(){
     localStorage.removeItem('nova_custom_api_key');
-    document.getElementById('custom-key-input').value = '';
-    onKeyInput('');
+    const keyInput = document.getElementById('settings-custom-key-input');
+    if(keyInput) keyInput.value = '';
+    onSettingsKeyInput('');
     fetchQuota();
-    showToast('Key removed. Reverted to Free Tier.', 'ℹ️');
-    closeModal('key-modal-overlay');
+    showToast('Personal key removed. Reverted to shared Groq 20k quota.', 'ℹ️');
   }
+
+  // Backward compatibility forwarders
+  function openKeyModal(){ openSettingsScreen(); }
+  function saveCustomKey(){ saveSettingsScreen(); }
+  function removeCustomKey(){ removeSettingsKey(); }
+  function handleProviderChange(p){ handleSettingsProviderChange(p); }
+  function onKeyInput(v){ onSettingsKeyInput(v); }
+  function toggleKeyVisibility(){ toggleSettingsKeyVisibility(); }
 
   // 1. Delete Confirmation Flow
   function requestDeleteChat(e, id){
@@ -2148,6 +2695,7 @@ body{
     try {
       const customKey = localStorage.getItem('nova_custom_api_key') || '';
       const customProvider = localStorage.getItem('nova_custom_provider') || 'auto';
+      const customModel = localStorage.getItem('nova_custom_model') || '';
       const response = await fetch('/chat/stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -2157,7 +2705,8 @@ body{
           mode: activeMode,
           web_search: webSearchEnabled,
           api_key: customKey,
-          provider: customProvider
+          provider: customProvider,
+          custom_model: customModel
         }),
         signal: abortController.signal
       });
@@ -2269,7 +2818,8 @@ body{
               mode: activeMode, 
               web_search: webSearchEnabled,
               api_key: customKey,
-              provider: customProvider
+              provider: customProvider,
+              custom_model: customModel
             })
           });
           const data = await fb.json();

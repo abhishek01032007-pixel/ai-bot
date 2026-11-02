@@ -85,7 +85,7 @@ class UserTokenTracker:
                 data["tokens_used"] += max(0, int(token_count))
                 data["request_count"] += 1
 
-    def get_status(self, ip, has_custom_key=False):
+    def get_status(self, ip, has_personal_key=False):
         data = self.get_or_reset(ip)
         now = time.time()
         elapsed = now - data["window_start"]
@@ -104,17 +104,18 @@ class UserTokenTracker:
 
         return {
             "ip": masked_ip,
-            "has_custom_key": has_custom_key,
-            "tier": "Unlimited (Personal API Key Connected)" if has_custom_key else "Free Tier (7-Hour Cycle)",
-            "token_limit": "Unlimited" if has_custom_key else FREE_TIER_TOKEN_LIMIT,
+            "has_personal_key": has_personal_key,
+            "has_custom_key": has_personal_key,
+            "tier": "Personal Key (BYOK Account)" if has_personal_key else "Default User (Shared Groq Engine · 20,000 tokens/7h)",
+            "token_limit": "Personal Quota" if has_personal_key else FREE_TIER_TOKEN_LIMIT,
             "tokens_used": tokens_used,
-            "tokens_remaining": "Unlimited" if has_custom_key else tokens_remaining,
-            "percent_used": 0 if has_custom_key else pct_used,
+            "tokens_remaining": "Personal Quota" if has_personal_key else tokens_remaining,
+            "percent_used": 0 if has_personal_key else pct_used,
             "resets_in_seconds": remaining_seconds,
             "resets_formatted": resets_formatted,
             "cycle_hours": 7,
             "request_count": data["request_count"],
-            "can_proceed": has_custom_key or (tokens_used < FREE_TIER_TOKEN_LIMIT)
+            "can_proceed": has_personal_key or (tokens_used < FREE_TIER_TOKEN_LIMIT)
         }
 
 token_tracker = UserTokenTracker()
@@ -122,13 +123,6 @@ token_tracker = UserTokenTracker()
 # ==============================================================================
 # 2. MULTI-PROVIDER AI ADAPTER & MODEL SELECTION
 # ==============================================================================
-# Supported Providers:
-# 1. Google Gemini: gemini-1.5-flash (Turbo) / gemini-1.5-pro (Precision)
-# 2. Groq:          llama-3.1-8b-instant (Turbo) / llama-3.3-70b-versatile (Precision)
-# 3. OpenAI:        gpt-4o-mini (Turbo) / gpt-4o (Precision)
-# 4. Anthropic:     claude-3-5-haiku (Turbo) / claude-3-5-sonnet (Precision)
-# 5. OpenRouter:    meta-llama/llama-3.1-8b:free (Turbo) / llama-3.3-70b (Precision)
-
 def detect_provider(key):
     """Auto-detect provider from official API key signatures."""
     k = (key or "").strip()
@@ -154,8 +148,8 @@ def hash_key_preview(key):
     suffix = k[-4:] if len(k) > 8 else ""
     return f"{prefix}••••••••{suffix} ({sha})"
 
-def resolve_model_and_endpoint(provider_hint, custom_key, mode, is_advanced):
-    """Determine target domain, model, and authentication parameters."""
+def resolve_model_and_endpoint(provider_hint, custom_key, mode, is_advanced, custom_model=""):
+    """Determine target domain, model, and authentication parameters without forcing models."""
     key = (custom_key or PRIMARY_API_KEY or "").strip()
     if not key:
         return "fallback", "openai-fast", "", ""
@@ -164,20 +158,23 @@ def resolve_model_and_endpoint(provider_hint, custom_key, mode, is_advanced):
     if p == "unknown":
         p = "groq" if key.startswith("gsk_") else "gemini" if key.startswith("AIza") else "openai"
 
+    # If the user typed or chose an exact custom model, honor it directly!
+    selected_model = (custom_model or "").strip()
+
     if p == "gemini":
-        model = "gemini-1.5-pro" if (mode == "precision" or is_advanced) else "gemini-1.5-flash"
+        model = selected_model if selected_model else ("gemini-1.5-pro" if (mode == "precision" or is_advanced) else "gemini-1.5-flash")
         url = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
     elif p == "openai":
-        model = "gpt-4o" if (mode == "precision" or is_advanced) else "gpt-4o-mini"
+        model = selected_model if selected_model else ("gpt-4o" if (mode == "precision" or is_advanced) else "gpt-4o-mini")
         url = "https://api.openai.com/v1/chat/completions"
     elif p == "anthropic":
-        model = "claude-3-5-sonnet-20241022" if (mode == "precision" or is_advanced) else "claude-3-5-haiku-20241022"
+        model = selected_model if selected_model else ("claude-3-5-sonnet-20241022" if (mode == "precision" or is_advanced) else "claude-3-5-haiku-20241022")
         url = "https://api.anthropic.com/v1/messages"
     elif p == "openrouter":
-        model = "meta-llama/llama-3.3-70b-instruct" if (mode == "precision" or is_advanced) else "meta-llama/llama-3.1-8b-instruct:free"
+        model = selected_model if selected_model else ("meta-llama/llama-3.3-70b-instruct" if (mode == "precision" or is_advanced) else "meta-llama/llama-3.1-8b-instruct:free")
         url = "https://openrouter.ai/api/v1/chat/completions"
     elif p == "groq":
-        model = "llama-3.3-70b-versatile" if (mode == "precision" or is_advanced) else "llama-3.1-8b-instant"
+        model = selected_model if selected_model else ("llama-3.3-70b-versatile" if (mode == "precision" or is_advanced) else "llama-3.1-8b-instant")
         url = "https://api.groq.com/openai/v1/chat/completions"
     else:
         return "fallback", "openai-fast", "", ""
@@ -453,11 +450,11 @@ def health():
 
 @app.route("/api/quota", methods=["GET"])
 def get_quota():
-    """Retrieve the active token usage & 7-hour reset timer for the calling user IP."""
+    """Retrieve active token usage & 7-hour reset timer for the calling user IP."""
     client_ip = token_tracker.get_client_ip(request)
-    custom_key = request.headers.get("X-API-Key") or request.args.get("api_key") or ""
-    has_custom_key = bool(custom_key or PRIMARY_API_KEY)
-    status = token_tracker.get_status(client_ip, has_custom_key)
+    custom_key = (request.headers.get("X-API-Key") or request.args.get("api_key") or "").strip()
+    has_personal_key = bool(custom_key)
+    status = token_tracker.get_status(client_ip, has_personal_key=has_personal_key)
     return jsonify(status)
 
 @app.route("/chat", methods=["POST"])
@@ -468,22 +465,24 @@ def chat():
     mode = data.get("mode", "turbo")
     web_search = data.get("web_search", False)
     custom_key = data.get("api_key", "").strip()
+    custom_model = data.get("custom_model") or data.get("model") or ""
     provider_hint = data.get("provider", "auto")
 
     if not user_message:
         return jsonify({"reply": "Please enter a message!"}), 400
 
     client_ip = token_tracker.get_client_ip(request)
-    has_custom_key = bool(custom_key or PRIMARY_API_KEY)
+    # Default users rely on shared Groq engine and ARE strictly capped to 20,000 tokens/7h
+    has_personal_key = bool(custom_key)
 
-    # 1. Enforce 7-hour Token Quota for Free Tier users
-    quota = token_tracker.get_status(client_ip, has_custom_key)
+    # 1. Enforce 7-hour Token Quota
+    quota = token_tracker.get_status(client_ip, has_personal_key=has_personal_key)
     if not quota["can_proceed"]:
         resets_in = quota["resets_formatted"]
         limit_msg = (
-            f"You have reached your 7-hour free quota ({FREE_TIER_TOKEN_LIMIT:,} tokens). "
+            f"You have reached your 7-hour free quota ({FREE_TIER_TOKEN_LIMIT:,} tokens) on our shared Groq engine. "
             f"Your limit resets in {resets_in}. "
-            "To remove all token limits and continue immediately, connect any free API key (Gemini, Groq, OpenAI, Claude) in Speed Settings."
+            "To continue without limit, connect your personal API key (Gemini, Groq, OpenAI, Claude) in Settings."
         )
         return jsonify({"reply": limit_msg, "quota_exceeded": True}), 429
 
@@ -505,7 +504,7 @@ def chat():
             formatted_messages.append({"role": role, "content": content})
     formatted_messages.append({"role": "user", "content": user_message})
 
-    provider, model, key, url = resolve_model_and_endpoint(provider_hint, custom_key, mode, is_advanced)
+    provider, model, key, url = resolve_model_and_endpoint(provider_hint, custom_key, mode, is_advanced, custom_model=custom_model)
     token_budget = 1200 if is_advanced else 750
     temperature = 0.4 if is_advanced else 0.6
 
@@ -514,7 +513,7 @@ def chat():
         # Track token consumption (approx 1 token per 4 characters)
         estimated_tokens = max(1, (len(user_message) + len(reply)) // 4)
         token_tracker.consume_tokens(client_ip, estimated_tokens)
-        ui_mode = f"{provider.capitalize()} · {'Precision' if is_advanced else 'Turbo'}"
+        ui_mode = f"{provider.capitalize()} ({model}) · {'Precision' if is_advanced else 'Turbo'}"
         return jsonify({"reply": reply, "mode": ui_mode, "searched": bool(search_context)})
     except Exception as e:
         print(f"Chat error: {e}")
@@ -531,22 +530,23 @@ def chat_stream():
     mode = data.get("mode", "turbo")
     web_search = data.get("web_search", False)
     custom_key = data.get("api_key", "").strip()
+    custom_model = data.get("custom_model") or data.get("model") or ""
     provider_hint = data.get("provider", "auto")
 
     if not user_message:
         return jsonify({"error": "Empty message"}), 400
 
     client_ip = token_tracker.get_client_ip(request)
-    has_custom_key = bool(custom_key or PRIMARY_API_KEY)
+    has_personal_key = bool(custom_key)
 
-    # 1. Enforce 7-hour Token Quota for Free Tier users
-    quota = token_tracker.get_status(client_ip, has_custom_key)
+    # 1. Enforce 7-hour Token Quota
+    quota = token_tracker.get_status(client_ip, has_personal_key=has_personal_key)
     if not quota["can_proceed"]:
         resets_in = quota["resets_formatted"]
         limit_msg = (
-            f"You have reached your 7-hour free quota ({FREE_TIER_TOKEN_LIMIT:,} tokens). "
+            f"You have reached your 7-hour free quota ({FREE_TIER_TOKEN_LIMIT:,} tokens) on our shared Groq engine. "
             f"Your limit resets in {resets_in}. "
-            "To remove all token limits and continue immediately, connect any free API key (Gemini, Groq, OpenAI, Claude) in Speed Settings."
+            "To continue without limit, connect your personal API key (Gemini, Groq, OpenAI, Claude) in Settings."
         )
         def quota_err_gen():
             yield f"data: {json.dumps({'content': limit_msg})}\n\n"
@@ -570,7 +570,7 @@ def chat_stream():
             formatted_messages.append({"role": role, "content": content})
     formatted_messages.append({"role": "user", "content": user_message})
 
-    provider, model, key, url = resolve_model_and_endpoint(provider_hint, custom_key, mode, is_advanced)
+    provider, model, key, url = resolve_model_and_endpoint(provider_hint, custom_key, mode, is_advanced, custom_model=custom_model)
     token_budget = 1200 if is_advanced else 750
     temperature = 0.4 if is_advanced else 0.6
 
