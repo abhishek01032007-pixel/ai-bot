@@ -1159,6 +1159,87 @@ body{
   from{opacity:1;transform:translateY(0)}
   to{opacity:0;transform:translateY(-8px)}
 }
+
+/* Quota Card & Token Tracker Styles */
+.quota-card{
+  background:var(--bg);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:14px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.quota-card-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+.quota-title-wrap{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.quota-chip{
+  background:rgba(16,185,129,0.12);
+  color:var(--accent);
+  padding:3px 8px;
+  border-radius:5px;
+  font-size:11px;
+  font-weight:600;
+}
+.quota-reset-pill{
+  font-size:11.5px;
+  color:var(--text-dim);
+  background:var(--surface-elevated);
+  padding:2px 8px;
+  border-radius:12px;
+}
+.quota-bar-wrap{
+  width:100%;
+  height:7px;
+  background:var(--surface-elevated);
+  border-radius:6px;
+  overflow:hidden;
+}
+.quota-bar-fill{
+  height:100%;
+  background:var(--accent);
+  border-radius:6px;
+  transition:width .3s ease;
+}
+.quota-stats-row{
+  display:flex;
+  justify-content:space-between;
+  font-size:11.5px;
+  color:var(--text-muted);
+}
+.model-info-box{
+  background:var(--bg);
+  border:1px solid var(--border-subtle);
+  border-radius:8px;
+  padding:10px 12px;
+  font-size:12px;
+}
+.quota-nav-pill{
+  display:flex;
+  align-items:center;
+  gap:5px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  color:var(--text-muted);
+  font-size:11.5px;
+  font-family:inherit;
+  padding:5px 11px;
+  border-radius:20px;
+  cursor:pointer;
+  transition:all .15s;
+}
+.quota-nav-pill:hover{
+  background:var(--surface-elevated);
+  color:var(--text);
+  border-color:var(--accent);
+}
 </style>
 </head>
 <body>
@@ -1237,6 +1318,13 @@ body{
     </div>
 
     <div class="top-nav-right">
+      <!-- Live Token Quota Pill -->
+      <button class="quota-nav-pill" id="topbar-quota-pill" onclick="openKeyModal()" title="View Token Usage & 7-Hour Reset">
+        <span id="nav-quota-tokens">⚡ 20k tokens</span>
+        <span style="opacity:0.5;">·</span>
+        <span id="nav-quota-timer">7h</span>
+      </button>
+
       <!-- Segmented Mode Switcher -->
       <div class="mode-capsule">
         <button class="mode-pill turbo active" id="pill-turbo" onclick="selectMode('turbo')">⚡ Turbo</button>
@@ -1351,32 +1439,78 @@ body{
   </div>
 </div>
 
-<!-- 4. HIGH-SPEED ENGINE SETTINGS MODAL -->
+<!-- 4. MULTI-PROVIDER AI & 7-HOUR QUOTA SETTINGS MODAL -->
 <div class="modal-overlay" id="key-modal-overlay" onclick="handleModalOverlayClick(event, 'key-modal-overlay')">
-  <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="key-modal-title">
+  <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="key-modal-title" style="max-width:480px;max-height:88vh;overflow-y:auto;">
     <div class="modal-header">
       <div class="modal-title-wrap">
         <div class="modal-icon-badge accent">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
         </div>
-        <h3 class="modal-title" id="key-modal-title">High-Speed Engine Settings</h3>
+        <h3 class="modal-title" id="key-modal-title">Multi-Provider AI & Quota</h3>
       </div>
       <button class="modal-close-btn" onclick="closeModal('key-modal-overlay')" title="Cancel">✕</button>
     </div>
-    <form onsubmit="event.preventDefault(); saveCustomKey();" style="display:flex;flex-direction:column;gap:14px;">
-      <div class="modal-body" style="font-size:13px;line-height:1.55;">
-        <p style="margin:0 0 10px 0;">
-          Unlock guaranteed <strong>sub-second answers (<0.5s, 800+ tokens/sec)</strong> and frontier 70B reasoning by connecting a free API key:
-        </p>
-        <ul style="margin:0 0 12px 18px;padding:0;color:var(--text-muted);font-size:12px;">
-          <li>Free tier: <strong>14,400 daily requests</strong> (resets daily at 00:00 UTC)</li>
-          <li>Instant key setup at <a href="https://console.groq.com/keys" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:underline;">console.groq.com/keys</a></li>
-          <li>Saved private & secure inside your browser's local storage</li>
-        </ul>
-        <label for="custom-key-input" style="display:block;margin-bottom:6px;font-size:12px;color:var(--text-dim);font-weight:600;">Dedicated API Key:</label>
-        <input type="password" id="custom-key-input" class="modal-input" placeholder="gsk_..." autocomplete="off" spellcheck="false" />
+
+    <!-- 7-HOUR PER-IP TOKEN TRACKER CARD -->
+    <div class="quota-card" id="quota-card">
+      <div class="quota-card-header">
+        <div class="quota-title-wrap">
+          <span class="quota-chip" id="quota-tier-badge">Free Tier</span>
+          <span style="font-size:12px;color:var(--text-dim);" id="quota-ip-label">IP: Detecting...</span>
+        </div>
+        <span class="quota-reset-pill" id="quota-reset-countdown">Resets in 7h 0m</span>
+      </div>
+      
+      <div class="quota-bar-wrap">
+        <div class="quota-bar-fill" id="quota-bar-fill" style="width: 0%;"></div>
+      </div>
+      
+      <div class="quota-stats-row">
+        <span id="quota-used-text">0 / 20,000 tokens</span>
+        <span id="quota-remaining-text" style="color:var(--accent);font-weight:600;">20,000 remaining</span>
+      </div>
+      <div style="font-size:11px;color:var(--text-dim);margin-top:2px;line-height:1.4;">
+        ℹ️ Free tier resets every <strong>7 hours</strong> per user IP. Connecting any personal key unlocks <strong>Unlimited Tokens</strong>.
+      </div>
+    </div>
+
+    <form onsubmit="event.preventDefault(); saveCustomKey();" style="display:flex;flex-direction:column;gap:13px;margin-top:6px;">
+      <!-- Provider Selector -->
+      <div>
+        <label for="provider-select" style="display:block;margin-bottom:6px;font-size:12px;color:var(--text-dim);font-weight:600;">Select AI Provider:</label>
+        <select id="provider-select" class="modal-input" onchange="handleProviderChange(this.value)" style="cursor:pointer;background:var(--surface);">
+          <option value="auto">✨ Auto-Detect (From Key Prefix)</option>
+          <option value="gemini">Google Gemini (AIza...)</option>
+          <option value="groq">Groq Cloud (gsk_...)</option>
+          <option value="openai">OpenAI (sk-...)</option>
+          <option value="anthropic">Anthropic Claude (sk-ant-...)</option>
+          <option value="openrouter">OpenRouter / Open Cloud (sk-or-...)</option>
+        </select>
+      </div>
+
+      <!-- Default Model Information Display -->
+      <div class="model-info-box" id="model-info-box">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+          <span style="color:var(--text);font-weight:600;" id="model-provider-name">Auto-Detect</span>
+          <span style="color:var(--accent);font-size:11px;font-weight:600;">Default Models</span>
+        </div>
+        <div style="font-size:12px;color:var(--text-muted);display:flex;flex-direction:column;gap:3px;" id="model-pair-list">
+          <div>⚡ <strong>Turbo:</strong> <span id="model-turbo-name">llama-3.1-8b-instant / gemini-1.5-flash</span></div>
+          <div>🧠 <strong>Precision:</strong> <span id="model-precision-name">llama-3.3-70b-versatile / gemini-1.5-pro</span></div>
+        </div>
+      </div>
+
+      <!-- API Key Input -->
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <label for="custom-key-input" style="font-size:12px;color:var(--text-dim);font-weight:600;">Personal API Key (BYOK):</label>
+          <button type="button" class="clear-all-link" onclick="toggleKeyVisibility()" id="key-vis-toggle" style="font-size:11px;">Show</button>
+        </div>
+        <input type="password" id="custom-key-input" class="modal-input" placeholder="Paste Gemini, Groq, OpenAI, or Claude key..." autocomplete="off" spellcheck="false" oninput="onKeyInput(this.value)" />
         <div id="key-status-hint" style="margin-top:6px;font-size:11.5px;color:var(--text-dim);"></div>
       </div>
+
       <div class="modal-actions">
         <button type="button" class="modal-btn cancel" onclick="removeCustomKey()">Remove Key</button>
         <button type="submit" class="modal-btn primary">Save & Connect</button>
@@ -1534,35 +1668,159 @@ body{
     }
   });
 
-  // High-Speed Engine Key Settings Flow
+  const PROVIDER_MODELS = {
+    gemini: { name: 'Google Gemini', turbo: 'gemini-1.5-flash', precision: 'gemini-1.5-pro' },
+    groq: { name: 'Groq Cloud', turbo: 'llama-3.1-8b-instant', precision: 'llama-3.3-70b-versatile' },
+    openai: { name: 'OpenAI', turbo: 'gpt-4o-mini', precision: 'gpt-4o' },
+    anthropic: { name: 'Anthropic Claude', turbo: 'claude-3-5-haiku', precision: 'claude-3-5-sonnet' },
+    openrouter: { name: 'OpenRouter', turbo: 'meta-llama/llama-3.1-8b:free', precision: 'meta-llama/llama-3.3-70b' },
+    auto: { name: 'Auto-Detect', turbo: 'llama-3.1-8b-instant / gemini-1.5-flash', precision: 'llama-3.3-70b / gemini-1.5-pro' }
+  };
+
+  function detectKeyProvider(key){
+    const k = (key || '').trim();
+    if(k.startsWith('gsk_')) return 'groq';
+    if(k.startsWith('AIza')) return 'gemini';
+    if(k.startsWith('sk-ant-')) return 'anthropic';
+    if(k.startsWith('sk-or-')) return 'openrouter';
+    if(k.startsWith('sk-')) return 'openai';
+    return 'unknown';
+  }
+
+  function hashPreview(key){
+    if(!key) return '';
+    const k = key.trim();
+    let hash = 0;
+    for(let i = 0; i < k.length; i++){
+      hash = ((hash << 5) - hash) + k.charCodeAt(i);
+      hash |= 0;
+    }
+    const hex = Math.abs(hash).toString(16).padStart(6, '0').slice(0, 6);
+    const prefix = k.slice(0, 4);
+    const suffix = k.length > 8 ? k.slice(-4) : '';
+    return `${prefix}••••••••${suffix} (SHA: ${hex})`;
+  }
+
+  async function fetchQuota(){
+    const customKey = localStorage.getItem('nova_custom_api_key') || '';
+    try {
+      const res = await fetch('/api/quota', {
+        headers: { 'X-API-Key': customKey }
+      });
+      if(!res.ok) return;
+      const q = await res.json();
+
+      // Update Topbar Quota Pill
+      const navTokens = document.getElementById('nav-quota-tokens');
+      const navTimer = document.getElementById('nav-quota-timer');
+      if(navTokens && navTimer){
+        if(q.has_custom_key){
+          navTokens.textContent = '⚡ Unlimited';
+          navTimer.textContent = 'BYOK Key';
+        } else {
+          const remK = (q.tokens_remaining / 1000).toFixed(1);
+          navTokens.textContent = `⚡ ${remK}k tokens`;
+          navTimer.textContent = q.resets_formatted;
+        }
+      }
+
+      // Update Modal Quota Card
+      const tierBadge = document.getElementById('quota-tier-badge');
+      const ipLabel = document.getElementById('quota-ip-label');
+      const resetCountdown = document.getElementById('quota-reset-countdown');
+      const barFill = document.getElementById('quota-bar-fill');
+      const usedText = document.getElementById('quota-used-text');
+      const remainingText = document.getElementById('quota-remaining-text');
+
+      if(tierBadge) tierBadge.textContent = q.has_custom_key ? 'Unlimited (BYOK)' : 'Free Tier (7-Hour Window)';
+      if(ipLabel) ipLabel.textContent = `IP: ${q.ip}`;
+      if(resetCountdown) resetCountdown.textContent = q.has_custom_key ? 'Always Active' : `Resets in ${q.resets_formatted}`;
+      if(barFill){
+        const pct = q.has_custom_key ? 0 : q.percent_used;
+        barFill.style.width = pct + '%';
+        barFill.style.background = pct > 80 ? '#ef4444' : pct > 50 ? '#f59e0b' : 'var(--accent)';
+      }
+      if(usedText){
+        usedText.textContent = q.has_custom_key 
+          ? `${q.request_count} requests processed` 
+          : `${q.tokens_used.toLocaleString()} / 20,000 tokens`;
+      }
+      if(remainingText){
+        remainingText.textContent = q.has_custom_key 
+          ? 'Unlimited Tokens' 
+          : `${q.tokens_remaining.toLocaleString()} remaining`;
+      }
+    } catch(err){
+      console.warn('Quota fetch error:', err);
+    }
+  }
+
+  function handleProviderChange(provider){
+    localStorage.setItem('nova_custom_provider', provider);
+    const pInfo = PROVIDER_MODELS[provider] || PROVIDER_MODELS.auto;
+    document.getElementById('model-provider-name').textContent = pInfo.name;
+    document.getElementById('model-turbo-name').textContent = pInfo.turbo;
+    document.getElementById('model-precision-name').textContent = pInfo.precision;
+  }
+
+  function onKeyInput(value){
+    const sel = document.getElementById('provider-select');
+    const hint = document.getElementById('key-status-hint');
+    if(!value.trim()){
+      hint.innerHTML = '<span style="color:var(--text-dim);">No key entered. Free Tier active (20,000 tokens/7h).</span>';
+      return;
+    }
+    const detected = detectKeyProvider(value);
+    if(sel.value === 'auto' && detected !== 'unknown'){
+      handleProviderChange(detected);
+    }
+    hint.innerHTML = `<span style="color:var(--accent);">✓ ${hashPreview(value)} · Secured & Ready</span>`;
+  }
+
+  function toggleKeyVisibility(){
+    const input = document.getElementById('custom-key-input');
+    const toggle = document.getElementById('key-vis-toggle');
+    if(input.type === 'password'){
+      input.type = 'text';
+      toggle.textContent = 'Hide';
+    } else {
+      input.type = 'password';
+      toggle.textContent = 'Show';
+    }
+  }
+
   function openKeyModal(){
     const input = document.getElementById('custom-key-input');
+    const sel = document.getElementById('provider-select');
     const savedKey = localStorage.getItem('nova_custom_api_key') || '';
+    const savedProvider = localStorage.getItem('nova_custom_provider') || 'auto';
     input.value = savedKey;
-    const hint = document.getElementById('key-status-hint');
-    if(savedKey){
-      hint.innerHTML = '<span style="color:var(--accent);font-weight:600;">⚡ Dedicated Accelerator Key Active</span>';
-    } else {
-      hint.innerHTML = '<span>Cloud Fallback Active (Standard Speed)</span>';
-    }
+    sel.value = savedProvider;
+    handleProviderChange(savedProvider);
+    onKeyInput(savedKey);
+    fetchQuota();
     openModal('key-modal-overlay');
-    setTimeout(() => { input.focus(); }, 50);
   }
 
   function saveCustomKey(){
     const input = document.getElementById('custom-key-input');
+    const sel = document.getElementById('provider-select');
     const key = input.value.trim();
     if(key){
       localStorage.setItem('nova_custom_api_key', key);
-      showToast('Dedicated accelerator key connected!', '⚡');
+      localStorage.setItem('nova_custom_provider', sel.value);
+      showToast('Personal API key securely connected!', '⚡');
     }
+    fetchQuota();
     closeModal('key-modal-overlay');
   }
 
   function removeCustomKey(){
     localStorage.removeItem('nova_custom_api_key');
     document.getElementById('custom-key-input').value = '';
-    showToast('Key removed. Reverted to cloud fallback.', 'ℹ️');
+    onKeyInput('');
+    fetchQuota();
+    showToast('Key removed. Reverted to Free Tier.', 'ℹ️');
     closeModal('key-modal-overlay');
   }
 
@@ -1888,6 +2146,8 @@ body{
     abortController = new AbortController();
 
     try {
+      const customKey = localStorage.getItem('nova_custom_api_key') || '';
+      const customProvider = localStorage.getItem('nova_custom_provider') || 'auto';
       const response = await fetch('/chat/stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1896,7 +2156,8 @@ body{
           history: history,
           mode: activeMode,
           web_search: webSearchEnabled,
-          api_key: localStorage.getItem('nova_custom_api_key') || ''
+          api_key: customKey,
+          provider: customProvider
         }),
         signal: abortController.signal
       });
@@ -2002,7 +2263,14 @@ body{
           const fb = await fetch('/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: message, history: history, mode: activeMode, web_search: webSearchEnabled })
+            body: JSON.stringify({ 
+              message: message, 
+              history: history, 
+              mode: activeMode, 
+              web_search: webSearchEnabled,
+              api_key: customKey,
+              provider: customProvider
+            })
           });
           const data = await fb.json();
           insertMessage('bot', data.reply || 'I am ready. Please re-send.', true, { searched: data.searched, mode: data.mode });
@@ -2012,6 +2280,7 @@ body{
       }
     } finally {
       setGeneratingState(false);
+      fetchQuota();
       input.focus();
     }
   }
@@ -2127,9 +2396,11 @@ body{
       .replace(/'/g, '&#39;');
   }
 
-  // Page Load: Restore exact conversation session from localStorage
+  // Page Load: Restore exact conversation session from localStorage & sync quota
   window.addEventListener('load', () => {
     applyTheme(currentTheme);
+    fetchQuota();
+    setInterval(fetchQuota, 60000); // Sync 7-hour reset timer every 60s
     if(sessions.length > 0){
       const targetSession = sessions.find(s => s.id === activeId) || sessions[sessions.length - 1];
       selectChat(targetSession.id);
